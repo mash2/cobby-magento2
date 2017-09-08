@@ -7,7 +7,6 @@ namespace Mash2\Cobby\Api;
 interface ImportInterface
 {
     /**
-     *
      * @api
      * @param string $jsonData
      * @return mixed
@@ -76,4 +75,16 @@ interface ImportInterface
      * @return array
      */
     public function importProductBundle($jsonData);
+
+    /**
+     * @return bool
+     */
+    public function importProductsStart();
+
+    /**
+     * @param \Mash2\Cobby\Api\Data\ImportProductsFinishInterface $data
+     * @return bool
+     */
+    public function importProductsFinish(\Mash2\Cobby\Api\Data\ImportProductsFinishInterface $data);
+
 }

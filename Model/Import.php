@@ -3,6 +3,9 @@ namespace Mash2\Cobby\Model;
 
 class Import implements \Mash2\Cobby\Api\ImportInterface
 {
+    const START = 'start';
+    const FINISH = 'finish';
+
     /**
      * Json Helper
      *
@@ -66,6 +69,11 @@ class Import implements \Mash2\Cobby\Api\ImportInterface
     private $importProductBundle;
 
     /**
+     * @var \Magento\Framework\Event\ManagerInterface
+     */
+    private $eventManager;
+
+    /**
      * @param \Magento\Framework\Json\Helper\Data $jsonHelper
      * @param \Mash2\Cobby\Api\ImportProductLinkManagementInterface $importProductLink
      * @param \Mash2\Cobby\Api\ImportProductCategoryManagementInterface $importProductCategory
@@ -78,6 +86,7 @@ class Import implements \Mash2\Cobby\Api\ImportInterface
      * @param \Mash2\Cobby\Api\ImportProductUrlManagementInterface $importProductUrl
      * @param \Magento\ImportExport\Model\ImportFactory $importModelFactory
      * @param \Mash2\Cobby\Api\ImportProductBundleManagementInterface $importProductBundle
+     * @param \Magento\Framework\Event\ManagerInterface $eventManager
      */
     public function __construct(
         \Magento\Framework\Json\Helper\Data $jsonHelper,
@@ -91,7 +100,9 @@ class Import implements \Mash2\Cobby\Api\ImportInterface
         \Mash2\Cobby\Api\ImportProductConfigurableManagementInterface $importProductConfigurable,
         \Mash2\Cobby\Api\ImportProductUrlManagementInterface $importProductUrl,
         \Magento\ImportExport\Model\ImportFactory $importModelFactory,
-        \Mash2\Cobby\Api\ImportProductBundleManagementInterface $importProductBundle
+        \Mash2\Cobby\Api\ImportProductBundleManagementInterface $importProductBundle,
+        \Magento\Framework\Event\ManagerInterface $eventManager
+
     ) {
         $this->jsonHelper = $jsonHelper;
         $this->importProductLink = $importProductLink;
@@ -105,6 +116,7 @@ class Import implements \Mash2\Cobby\Api\ImportInterface
         $this->importProductUrl = $importProductUrl;
         $this->importModelFactory = $importModelFactory;
         $this->importProductBundle = $importProductBundle;
+        $this->eventManager = $eventManager;
     }
 
     /**
@@ -204,5 +216,24 @@ class Import implements \Mash2\Cobby\Api\ImportInterface
         $rows = $this->jsonHelper->jsonDecode($jsonData);
         $result = $this->importProductBundle->import($rows);
         return $result;
+    }
+
+    public function importProductsStart()
+    {
+        $this->eventManager->dispatch('cobby_import_product_started');
+
+        return true;
+    }
+
+    /**
+     * @param \Mash2\Cobby\Api\Data\ImportProductsFinishInterface $data
+     * @return bool
+     */
+    public function importProductsFinish(\Mash2\Cobby\Api\Data\ImportProductsFinishInterface $data)
+    {
+        $this->eventManager->dispatch('cobby_import_product_finished', array(
+                'entities'          => $data->getEntities()));
+
+        return true;
     }
 }

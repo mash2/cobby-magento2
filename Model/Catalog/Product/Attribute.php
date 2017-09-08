@@ -18,16 +18,24 @@ class Attribute implements \Mash2\Cobby\Api\CatalogProductAttributeInterface
     protected $productResource;
 
     /**
+     * @var \Magento\Framework\Event\ManagerInterface
+     */
+    protected $eventManager;
+
+    /**
      * Api constructor.
      * @param \Magento\Catalog\Model\ResourceModel\Product\Attribute\Collection $attributeCollection
      * @param \Magento\Catalog\Model\ResourceModel\Product $productResource
+     * @param \Magento\Framework\Event\ManagerInterface $eventManager
      */
     public function __construct(
         \Magento\Catalog\Model\ResourceModel\Product\Attribute\Collection $attributeCollection,
-        \Magento\Catalog\Model\ResourceModel\Product $productResource
+        \Magento\Catalog\Model\ResourceModel\Product $productResource,
+        \Magento\Framework\Event\ManagerInterface $eventManager
     ){
         $this->attributeCollection = $attributeCollection;
         $this->productResource = $productResource;
+        $this->eventManager = $eventManager;
     }
 
     /**
@@ -48,10 +56,16 @@ class Attribute implements \Mash2\Cobby\Api\CatalogProductAttributeInterface
                 ->setAttributeSetFilter($attributeSetId)
                 ->load();
 
-
-
             foreach ($attributes as $attribute) {
-                $result[] = $this->getAttribute($attribute);
+                $data = $this->getAttribute($attribute);
+
+                $transportObject = new \Magento\Framework\DataObject();
+                $transportObject->setData($data);
+
+                $this->eventManager->dispatch('cobby_catalog_attribute_export_after', array(
+                    'attribute' => $attribute, 'transport' => $transportObject));
+
+                $result[] = $transportObject->getData();
             }
         }
 

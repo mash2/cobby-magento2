@@ -228,4 +228,18 @@
             <resource ref="Mash2_Cobby::cobby"/>
         </resources>
     </route>
+
+    <route url="/cobby/import/products/start" method="POST">
+        <service class="Mash2\Cobby\Api\ImportInterface" method="importProductsStart"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <route url="/cobby/import/products/finish" method="POST">
+        <service class="Mash2\Cobby\Api\ImportInterface" method="importProductsFinish"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
 </routes>

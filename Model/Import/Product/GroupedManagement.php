@@ -72,7 +72,8 @@ class GroupedManagement extends AbstractManagement implements \Mash2\Cobby\Api\I
         $existingProductIds = $this->loadExistingProductIds($productIds);
         $changedProductIds = array();
 
-        $this->eventManager->dispatch('cobby_before_product_grouped_import', array( 'products' => $productIds ));
+        $this->eventManager->dispatch('cobby_import_product_grouped_import_before', array(
+            'products' => $productIds ));
 
         foreach ($rows as $productId => $rowData) {
             if (!in_array($productId, $existingProductIds)) {
@@ -169,7 +170,8 @@ class GroupedManagement extends AbstractManagement implements \Mash2\Cobby\Api\I
 
         $this->touchProducts($changedProductIds);
 
-        $this->eventManager->dispatch('cobby_after_product_grouped_import', array( 'products' => $changedProductIds ));
+        $this->eventManager->dispatch('cobby_import_product_grouped_import_after', array(
+            'products' => $changedProductIds ));
 
         return $result;
     }

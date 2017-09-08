@@ -123,7 +123,7 @@ class CategoryManagement extends AbstractManagement implements \Mash2\Cobby\Api\
                 $result[] = $productLog;
             }
 
-            $this->eventManager->dispatch('cobby_before_product_category_import', array(
+            $this->eventManager->dispatch('cobby_import_product_category_import_before', array(
                 'products' => $changedProductIds
             ));
 
@@ -138,7 +138,7 @@ class CategoryManagement extends AbstractManagement implements \Mash2\Cobby\Api\
 
             $this->touchProducts($changedProductIds);
 
-            $this->eventManager->dispatch('cobby_after_product_category_import', array(
+            $this->eventManager->dispatch('cobby_import_product_category_import_after', array(
                 'products' => $changedProductIds,
                 'categories' => $changedCategoryIds
             ));

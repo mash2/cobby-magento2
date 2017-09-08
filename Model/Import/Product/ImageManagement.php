@@ -132,7 +132,8 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         $mediaGallery = $this->processRows($rows);
         $productIds = array_keys($mediaGallery);
 
-        $this->eventManager->dispatch('cobby_before_product_media_import', array( 'products' => $productIds ));
+        $this->eventManager->dispatch('cobby_import_product_media_import_before', array(
+            'products' => $productIds ));
 
         $this->saveMediaImages($mediaGallery);
         $this->saveMediaGallery($mediaGallery);
@@ -145,7 +146,8 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
 
         $this->touchProducts($productIds);
 
-        $this->eventManager->dispatch('cobby_after_product_media_import', array( 'products' => $productIds ));
+        $this->eventManager->dispatch('cobby_import_product_media_import_after', array(
+            'products' => $productIds ));
 
         return $result;
     }

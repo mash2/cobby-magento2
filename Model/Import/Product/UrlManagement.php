@@ -96,7 +96,7 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
         $productIds = array_keys($rows);
         $existingProductIds = $this->loadExistingProductIds($productIds);
         $changedProductIds = array();
-        $this->eventManager->dispatch('cobby_before_product_url_import', array( 'products' => $productIds ));
+        $this->eventManager->dispatch('cobby_import_product_url_import_before', array( 'products' => $productIds ));
 
         $attributesData = array();
         foreach($rows as $productId => $rowData) {
@@ -111,7 +111,7 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
         $this->saveProductAttributes($attributesData);
         $this->touchProducts($changedProductIds);
 
-        $this->eventManager->dispatch('cobby_after_product_url_import', array( 'products' => $changedProductIds ));
+        $this->eventManager->dispatch('cobby_import_product_url_import_after', array( 'products' => $changedProductIds ));
 
         $result = $attributesData;
         return $result;

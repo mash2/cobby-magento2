@@ -53,15 +53,21 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
     private $attrOptionLabelFactory;
 
     /**
+     * @var \Magento\Framework\Event\ManagerInterface
+     */
+    protected $eventManager;
+
+    /**
      * Import constructor.
      * @param \Magento\Framework\Json\Helper\Data $jsonHelper
      * @param \Magento\Catalog\Model\ResourceModel\Product $productResource
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param \Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\CollectionFactory $optionCollectionFactory
      * @param \Magento\Framework\Registry $registry
      * @param \Magento\Catalog\Api\ProductAttributeOptionManagementInterface $productAttributeOptionManagement
      * @param \Magento\Eav\Model\Entity\Attribute\OptionFactory $attrOptionFactory
      * @param \Magento\Eav\Model\Entity\Attribute\OptionLabelFactory $attrOptionLabelFactory
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\CollectionFactory $optionCollectionFactory
+     * @param \Magento\Framework\Event\ManagerInterface $eventManager
      */
     public function __construct(
         \Magento\Framework\Json\Helper\Data $jsonHelper,
@@ -71,7 +77,8 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
         \Magento\Eav\Model\Entity\Attribute\OptionFactory $attrOptionFactory,
         \Magento\Eav\Model\Entity\Attribute\OptionLabelFactory $attrOptionLabelFactory,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\CollectionFactory $optionCollectionFactory
+        \Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\CollectionFactory $optionCollectionFactory,
+        \Magento\Framework\Event\ManagerInterface $eventManager
     ) {
         $this->jsonHelper = $jsonHelper;
         $this->productResource = $productResource;
@@ -81,10 +88,21 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
         $this->attrOptionLabelFactory = $attrOptionLabelFactory;
         $this->storeManager = $storeManager;
         $this->optionCollectionFactory = $optionCollectionFactory;
+        $this->eventManager = $eventManager;
     }
 
     public function export($attributeId){
-        return $this->getOptions($attributeId);
+        $options = $this->getOptions($attributeId);
+
+        $transportObject = new \Magento\Framework\DataObject();
+        $transportObject->setData($options);
+
+        $attribute = $this->productResource->getAttribute($attributeId);
+
+        $this->eventManager->dispatch('cobby_catalog_product_attribute_option_export_after',
+            array('attribute' => $attribute, 'transport' => $transportObject));
+
+        return $transportObject->getData();
     }
 
     public function getOptions($attributeId, $filter = null)

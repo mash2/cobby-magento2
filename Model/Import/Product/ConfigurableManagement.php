@@ -139,7 +139,7 @@ class ConfigurableManagement extends AbstractManagement implements \Mash2\Cobby\
 
         $productIds = array_keys($rows);
 
-        $this->eventManager->dispatch('cobby_before_product_configurable_import', array( 'products' => $productIds ));
+        $this->eventManager->dispatch('cobby_import_product_configurable_import_before', array( 'products' => $productIds ));
 
         foreach ($rows as $productId => $row) {
             $attributes = $row['attributes'];
@@ -231,7 +231,7 @@ class ConfigurableManagement extends AbstractManagement implements \Mash2\Cobby\
 
         $this->touchProducts($productIds);
 
-        $this->eventManager->dispatch('cobby_after_product_configurable_import', array( 'products' => $productIds ));
+        $this->eventManager->dispatch('cobby_import_product_configurable_import_after', array( 'products' => $productIds ));
         return $importProductData;
     }
 

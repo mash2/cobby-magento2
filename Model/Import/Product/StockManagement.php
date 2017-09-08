@@ -85,7 +85,7 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
     {
         $result = array();
         $productIds = array_keys($rows);
-        $this->eventManager->dispatch('cobby_before_product_stock_import', array( 'products' => $productIds ));
+        $this->eventManager->dispatch('cobby_import_product_stock_import_before', array( 'products' => $productIds ));
 
         $manageStock = $this->cobbySettings->getManageStock();
         $defaultQuantity = $this->cobbySettings->getDefaultQuantity();
@@ -152,6 +152,8 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
             $this->connection->insertOnDuplicate($entityTable, array_values($stockItems));
             $this->touchProducts($existingProductIds);
         }
+
+        $this->eventManager->dispatch('cobby_import_product_stock_import_after', array( 'products' => $productIds ));
 
         return $result;
     }

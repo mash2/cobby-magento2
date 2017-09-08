@@ -79,7 +79,7 @@ class LinkManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impo
         $productIds = array_unique($productIds);
         $existingProductIds = $this->loadExistingProductIds($productIds);
 
-        $this->eventManager->dispatch('cobby_before_product_link_import', array( 'products' => $productIds ));
+        $this->eventManager->dispatch('cobby_import_product_link_import_before', array( 'products' => $productIds ));
         $touchedProductIds = array();
         foreach ($rows as $productId => $row) {
             if (!in_array($productId, $existingProductIds)) {
@@ -144,7 +144,7 @@ class LinkManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impo
 
         $this->touchProducts($touchedProductIds);
 
-        $this->eventManager->dispatch('cobby_after_product_link_import', array( 'products' => $productIds ));
+        $this->eventManager->dispatch('cobby_import_product_link_import_after', array( 'products' => $productIds ));
 
         return $result;
     }

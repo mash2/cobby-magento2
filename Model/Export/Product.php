@@ -1,4 +1,5 @@
 <?php
+
 namespace Mash2\Cobby\Model\Export;
 
 use Magento\Framework\App\ResourceConnection;
@@ -29,7 +30,7 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
     const COL_INVENTORY = '_inventory';
     const COL_GROUP_PRICE = '_group_price';
     const COL_TIER_PRICE = '_tier_price';
-    const COL_LINKS         = '_links';
+    const COL_LINKS = '_links';
     const COL_SUPER_PRODUCT_ATTRIBUTES = '_super_product_attributes';
     const COL_SUPER_PRODUCT_SKUS = '_super_product_skus';
     const COL_CUSTOM_OPTIONS = '_custom_options';
@@ -45,7 +46,7 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
     /**
      *  attrs not supported in cobby
      **/
-    protected $skipUnsupportedAttrCodes =  array('is_recurring', 'recurring_profile', 'category_ids', 'giftcard_amounts');
+    protected $skipUnsupportedAttrCodes = array('is_recurring', 'recurring_profile', 'category_ids', 'giftcard_amounts');
 
 
     /**
@@ -126,6 +127,11 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
     private $cobbyProduct;
 
     /**
+     * @var \Magento\Framework\Event\ManagerInterface
+     */
+    private $eventManager;
+
+    /**
      * @param \Magento\Framework\Json\Helper\Data $jsonHelper
      * @param \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $collectionFactory
      * @param \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate
@@ -136,6 +142,7 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
      * @param \Magento\Framework\App\ResourceConnection $resourceModel
      * @param \Magento\Catalog\Model\ResourceModel\Product\Option\CollectionFactory $optionColFactory
      * @param \Mash2\Cobby\Model\ResourceModel\Product\CollectionFactory $cobbyProduct
+     * @param \Magento\Framework\Event\ManagerInterface $eventManager
      */
     public function __construct(
         \Magento\Framework\Json\Helper\Data $jsonHelper,
@@ -147,7 +154,8 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
         \Magento\CatalogInventory\Model\ResourceModel\Stock\ItemFactory $itemFactory,
         \Magento\Framework\App\ResourceConnection $resourceModel,
         \Magento\Catalog\Model\ResourceModel\Product\Option\CollectionFactory $optionColFactory,
-        \Mash2\Cobby\Model\ResourceModel\Product\CollectionFactory $cobbyProduct
+        \Mash2\Cobby\Model\ResourceModel\Product\CollectionFactory $cobbyProduct,
+        \Magento\Framework\Event\ManagerInterface $eventManager
     )
     {
         $this->_entityCollectionFactory = $collectionFactory;
@@ -162,6 +170,7 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
         $this->optionColFactory = $optionColFactory;
         $this->jsonHelper = $jsonHelper;
         $this->cobbyProduct = $cobbyProduct;
+        $this->eventManager = $eventManager;
 
         $this->initStores();
     }
@@ -226,8 +235,8 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
         if (null === self::$attrCodes) {
             $attrCodes = array();
 
-            foreach ($this->getAttributeCollection() as $attribute) { 
-                if( in_array($attribute->getAttributeCode(), $this->skipUnsupportedAttrCodes)) {
+            foreach ($this->getAttributeCollection() as $attribute) {
+                if (in_array($attribute->getAttributeCode(), $this->skipUnsupportedAttrCodes)) {
                     continue;
                 }
 
@@ -239,7 +248,8 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
         return self::$attrCodes;
     }
 
-    private function _initResult($productIds, $defaultValue = array()) {
+    private function _initResult($productIds, $defaultValue = array())
+    {
         $result = array();
         foreach ($productIds as $productId) {
             $result[$productId] = $defaultValue;
@@ -262,11 +272,11 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
             $collection->addAttributeToFilter('entity_id', array('in' => $productIds));
 
             foreach ($collection as $productId => $product) {
-                $attributes = array( 'store_id' => $storeId);
+                $attributes = array('store_id' => $storeId);
                 foreach ($exportAttrCodes as &$attrCode) { // go through all valid attribute codes
                     $attrValue = $product->getData($attrCode);
 
-                    if(!is_array($attrValue)) {
+                    if (!is_array($attrValue)) {
                         $attributes[$attrCode] = $attrValue;
                     }
                 }
@@ -287,7 +297,8 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
      * @return \Magento\Eav\Model\Entity\Collection\AbstractCollection
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    protected function _prepareEntityCollection(\Magento\Eav\Model\Entity\Collection\AbstractCollection $collection) {
+    protected function _prepareEntityCollection(\Magento\Eav\Model\Entity\Collection\AbstractCollection $collection)
+    {
 
         foreach ($this->getAttributeCollection() as $attribute) { //$this->filterAttributeCollection()
             $attrCode = $attribute->getAttributeCode();
@@ -345,7 +356,7 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
 
         $select = $this->connection->select()->from(
             ['cpl' => $this->resourceModel->getTableName('catalog_product_link')],
-            [ 'cpl.product_id', 'cpl.linked_product_id', 'cpe.sku', 'cpl.link_type_id', 'position' => 'cplai.value', 'default_qty' => 'cplad.value' ]
+            ['cpl.product_id', 'cpl.linked_product_id', 'cpe.sku', 'cpl.link_type_id', 'position' => 'cplai.value', 'default_qty' => 'cplad.value']
         )->joinLeft(
             ['cpe' => $this->resourceModel->getTableName('catalog_product_entity')],
             '(cpe.entity_id = cpl.linked_product_id)',
@@ -353,7 +364,7 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
         )->joinLeft(
             ['cpla' => $this->resourceModel->getTableName('catalog_product_link_attribute')],
             $this->connection->quoteInto(
-                '(cpla.link_type_id = cpl.link_type_id AND cpla.product_link_attribute_code = ?)', 'position' ),
+                '(cpla.link_type_id = cpl.link_type_id AND cpla.product_link_attribute_code = ?)', 'position'),
             []
         )->joinLeft(
             ['cplaq' => $this->resourceModel->getTableName('catalog_product_link_attribute')],
@@ -374,11 +385,11 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
         while ($linksRow = $stmt->fetch()) {
             $productId = $linksRow['product_id'];
             $result[$productId][] = array(
-                'product_id'    => $linksRow['linked_product_id'],
-                'sku'           => $linksRow['sku'],
-                'link_type_id'  => $linksRow['link_type_id'],
-                'position'      => $linksRow['position'],
-                'default_qty'   => $linksRow['default_qty']
+                'product_id' => $linksRow['linked_product_id'],
+                'sku' => $linksRow['sku'],
+                'link_type_id' => $linksRow['link_type_id'],
+                'position' => $linksRow['position'],
+                'default_qty' => $linksRow['default_qty']
             );
         }
 
@@ -405,11 +416,11 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
         while ($tierRow = $stmt->fetch()) {
             $productId = $tierRow[$productEntityLinkField];
             $result[$productId][] = array(
-                'all_groups'        => $tierRow['all_groups'],
+                'all_groups' => $tierRow['all_groups'],
                 'customer_group_id' => $tierRow['customer_group_id'],
-                'qty'               => $tierRow['qty'],
-                'value'             => $tierRow['value']   ,
-                'website_id'        => $tierRow['website_id']
+                'qty' => $tierRow['qty'],
+                'value' => $tierRow['value'],
+                'website_id' => $tierRow['website_id']
             );
         }
 
@@ -432,7 +443,7 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
         $select = $this->connection->select()
             ->from(
                 array('mgv' => $this->resourceModel->getTableName('catalog_product_entity_media_gallery_value')),
-                array('mgv.'. $productEntityLinkField, 'mgv.store_id', 'mgv.label', 'mgv.position', 'mgv.disabled')
+                array('mgv.' . $productEntityLinkField, 'mgv.store_id', 'mgv.label', 'mgv.position', 'mgv.disabled')
             )->joinLeft(
                 array('mg' => $this->resourceModel->getTableName('catalog_product_entity_media_gallery')),
                 '(mg.value_id = mgv.value_id)',
@@ -443,18 +454,18 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
         $stmt = $this->connection->query($select);
         while ($mediaRow = $stmt->fetch()) {
             $productId = $mediaRow[$productEntityLinkField];
-			$storeId = isset($mediaRow['store_id']) ? (int)$mediaRow['store_id'] : 0;
-			if (in_array($storeId, $storeIds)) {
-				$result[$productId][] = array(
-					'store_id'      => $mediaRow['store_id'],
-					'attribute_id'  => $mediaRow['attribute_id'],
-					'filename'      => $mediaRow['filename'],
-					'label'         => $mediaRow['label'],
-					'position'      => $mediaRow['position'],
-					'disabled'      => $mediaRow['disabled'],
-					'media_type'    => $mediaRow['media_type']
-				);
-			}
+            $storeId = isset($mediaRow['store_id']) ? (int)$mediaRow['store_id'] : 0;
+            if (in_array($storeId, $storeIds)) {
+                $result[$productId][] = array(
+                    'store_id' => $mediaRow['store_id'],
+                    'attribute_id' => $mediaRow['attribute_id'],
+                    'filename' => $mediaRow['filename'],
+                    'label' => $mediaRow['label'],
+                    'position' => $mediaRow['position'],
+                    'disabled' => $mediaRow['disabled'],
+                    'media_type' => $mediaRow['media_type']
+                );
+            }
         }
 
         return $result;
@@ -465,7 +476,7 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
         return array(
             'store_id' => $storeId,
             'label' => $data['title'],
-            'use_default_label' =>  $data['store_title'] === null? '1' : '0',
+            'use_default_label' => $data['store_title'] === null ? '1' : '0',
         );
     }
 
@@ -475,7 +486,7 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
             'store_id' => $storeId,
             'price' => $data['price'],
             'price_type' => $data['price_type'],
-            'use_default_price' =>  $data['store_price'] === null? '1' : '0',
+            'use_default_price' => $data['store_price'] === null ? '1' : '0',
         );
     }
 
@@ -483,12 +494,12 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
     {
         $result = $this->_initResult($productIds);
 
-        $multiOptionsTypes = array('multiple','checkbox','radio','drop_down');
+        $multiOptionsTypes = array('multiple', 'checkbox', 'radio', 'drop_down');
         $resultPrepareItem = array();
 
         foreach ($this->storeIdToCode as $storeId => $storeCode) {
             $options = $this->optionColFactory->create();
-            /* @var \Magento\Catalog\Model\ResourceModel\Product\Option\Collection $options*/
+            /* @var \Magento\Catalog\Model\ResourceModel\Product\Option\Collection $options */
             $options
                 ->reset()
                 ->addOrder('sort_order')
@@ -499,13 +510,13 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
 
             foreach ($options as $option) {
                 $productId = $option['product_id'];
-                $optionId  = $option['option_id'];
+                $optionId = $option['option_id'];
 
-                if(!isset($resultPrepareItem[$productId])) {
+                if (!isset($resultPrepareItem[$productId])) {
                     $resultPrepareItem[$productId] = array();
                 }
 
-                if(!isset($resultPrepareItem[$productId][$optionId])) {
+                if (!isset($resultPrepareItem[$productId][$optionId])) {
                     $resultPrepareItem[$productId][$optionId] = array(
                         'id' => $optionId,
                         'type' => $option['type'],
@@ -524,11 +535,11 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
 
                 $resultPrepareItem[$productId][$optionId]['titles'][] = $this->_getStoreLabel($storeId, $option);
 
-                if(in_array($option['type'], $multiOptionsTypes)) {
-                    foreach($option->getValues() as $optionValue) {
+                if (in_array($option['type'], $multiOptionsTypes)) {
+                    foreach ($option->getValues() as $optionValue) {
                         $subOptionId = $optionValue['option_type_id'];
 
-                        if(!isset($resultPrepareItem[$productId][$optionId]['options'][$subOptionId])) {
+                        if (!isset($resultPrepareItem[$productId][$optionId]['options'][$subOptionId])) {
                             $resultPrepareItem[$productId][$optionId]['options'][$subOptionId] = array(
                                 'sub_option_Id' => $subOptionId,
                                 'sku' => $optionValue['sku'],
@@ -547,9 +558,9 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
             }
         }
 
-        foreach($resultPrepareItem as $productId => $productResult) {
+        foreach ($resultPrepareItem as $productId => $productResult) {
             $productOptions = array();
-            foreach($productResult as $productOption) {
+            foreach ($productResult as $productOption) {
                 $productArrayOption = $productOption;
                 $productArrayOption['options'] = array_values($productOption['options']);
                 $productOptions[] = $productArrayOption;
@@ -566,7 +577,7 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
         return $this->_getEntityCollection(true)
             ->setStoreId(Store::DEFAULT_STORE_ID)
             ->addAttributeToFilter('entity_id', array('in' => $productIds))
-            ->addAttributeToFilter('type_id', array( 'eq' => \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE))
+            ->addAttributeToFilter('type_id', array('eq' => \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE))
             ->getAllIds();
     }
 
@@ -619,8 +630,7 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
             $result[$productId][$row['attribute_id']] = array(
                 'product_super_attribute_id' => $row['product_super_attribute_id'],
                 'attribute_code' => $row['attribute_code'],
-                'frontend_label' => $row['frontend_label'])
-            ;
+                'frontend_label' => $row['frontend_label']);
         }
         return $result;
     }
@@ -643,7 +653,7 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
         while ($row = $stmt->fetch()) {
             $productId = $row['product_id'];
             $result[$productId][$row['attribute_id']][] = array(
-                'storeId'=>$row['store_id'],
+                'storeId' => $row['store_id'],
                 'label' => $row['value'],
                 'use_default' => $row['use_default']);
         }
@@ -654,15 +664,14 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
     {
         $result = $filterProducts;
         $collection = $this->cobbyProduct->create()
-                ->addFieldToFilter('entity_id', array('in'=>array_keys($result)));
+            ->addFieldToFilter('entity_id', array('in' => array_keys($result)));
 
         foreach ($collection as $item) {
             $productId = $item->getEntityId();
 
-            if (isset($result[$productId]) &&  $item->getHash() == $result[$productId]) {
+            if (isset($result[$productId]) && $item->getHash() == $result[$productId]) {
                 unset($result[$productId]);
-            }
-            else {
+            } else {
                 $result[$productId] = $item->getHash();
             }
         }
@@ -678,7 +687,7 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
         $linkField = $this->getProductEntityLinkField();
 
         $selectOptions = $this->connection->select()
-            ->from(['e' => $resource->getTableName('catalog_product_entity')], ['product_id' => 'e.entity_id' ])
+            ->from(['e' => $resource->getTableName('catalog_product_entity')], ['product_id' => 'e.entity_id'])
             ->join(['o' => $resource->getTableName('catalog_product_bundle_option')], '(o.parent_id = e.' . $linkField . ')')
             ->join(['v' => $resource->getTableName('catalog_product_bundle_option_value')], '(o.option_id = v.option_id)')
             ->where('e.entity_id IN (?)', $productIds);
@@ -689,26 +698,26 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
             $optionId = $row['option_id'];
             $productId = $row['product_id'];
 
-            if(!isset($bundleOptions[$productId][$optionId])) {
+            if (!isset($bundleOptions[$productId][$optionId])) {
                 $bundleOptions[$productId][$optionId] = array(
-                    'option_id'    => $optionId,
-                    'required'     => $row['required'],
-                    'position'     => $row['position'],
-                    'type'         => $row['type'],
-                    'titles'       => array(),
-                    'selections'   => array(),
+                    'option_id' => $optionId,
+                    'required' => $row['required'],
+                    'position' => $row['position'],
+                    'type' => $row['type'],
+                    'titles' => array(),
+                    'selections' => array(),
                 );
             }
             $bundleOptions[$productId][$optionId]['titles'][] = array(
                 'store_id' => $row['store_id'],
-                'title'    => $row['title']
+                'title' => $row['title']
             );
         }
 
         $selectSelections = $this->connection->select()
             ->from(array('s' => $resource->getTableName('catalog_product_bundle_selection')))
-            ->joinLeft(array('p' => $resource->getTableName('catalog_product_bundle_selection_price')),'(s.selection_id = p.selection_id)',
-                array( 'website_id' => 'website_id', 'website_price_type' => 'selection_price_type', 'website_price_value' => 'selection_price_value'))
+            ->joinLeft(array('p' => $resource->getTableName('catalog_product_bundle_selection_price')), '(s.selection_id = p.selection_id)',
+                array('website_id' => 'website_id', 'website_price_type' => 'selection_price_type', 'website_price_value' => 'selection_price_value'))
             ->where('s.parent_product_id IN (?)', $productIds);
 
         $querySelections = $this->connection->query($selectSelections);
@@ -717,23 +726,23 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
             $productId = $row['parent_product_id'];
             $selectionId = $row['selection_id'];
 
-            if(!isset($bundleOptions[$productId][$optionId][$selectionId])) {
+            if (!isset($bundleOptions[$productId][$optionId][$selectionId])) {
                 $bundleOptions[$productId][$optionId]['selections'][$selectionId] = array(
-                    'selection_id'         => $selectionId,
-                    'assigned_product_id'  => $row['product_id'],
-                    'position'             => $row['position'],
-                    'is_default'           => $row['is_default'],
-                    'qty'                  => $row['selection_qty'],
-                    'can_change_qty'       => $row['selection_can_change_qty'],
-                    'prices'               => array(array(
-                        'website_id'           => 0,
-                        'price_type'           => $row['selection_price_type'],
-                        'price_value'          => $row['selection_price_value']))
+                    'selection_id' => $selectionId,
+                    'assigned_product_id' => $row['product_id'],
+                    'position' => $row['position'],
+                    'is_default' => $row['is_default'],
+                    'qty' => $row['selection_qty'],
+                    'can_change_qty' => $row['selection_can_change_qty'],
+                    'prices' => array(array(
+                        'website_id' => 0,
+                        'price_type' => $row['selection_price_type'],
+                        'price_value' => $row['selection_price_value']))
 
                 );
             }
 
-            if(isset($row['website_id'])) {
+            if (isset($row['website_id'])) {
                 $bundleOptions[$productId][$optionId]['selections'][$selectionId]['prices'][] = array(
                     'website_id' => $row['website_id'],
                     'price_type' => $row['website_price_type'],
@@ -741,9 +750,9 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
             }
         }
 
-        foreach($bundleOptions as $productId => $bundleOption) {
+        foreach ($bundleOptions as $productId => $bundleOption) {
             $productOptions = array();
-            foreach($bundleOption as $productOption) {
+            foreach ($bundleOption as $productOption) {
                 $bundleSelections = $productOption;
                 $bundleSelections['selections'] = array_values($productOption['selections']);
                 $productOptions[] = $bundleSelections;
@@ -764,7 +773,7 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
 
         $unchangedProducts = array_diff_key($filterProductParams, $filterChangedProducts);
 
-        foreach($unchangedProducts as $productId => $hash) {
+        foreach ($unchangedProducts as $productId => $hash) {
             $result[$productId][self::COL_MAGENTO_ID] = $productId;
             $result[$productId][self::COL_HASH] = 'UNCHANGED';
         }
@@ -799,34 +808,34 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
         $collection->clear();
 
         $productIds = array_keys($filterChangedProducts);
-        $productAttributes      = $this->_prepareAttributes($productIds);
-        $productInventory       = $this->prepareCatalogInventory($productIds);
-        $productLinks           = $this->prepareLinks($productIds);
-        $productTierPrice       = $this->prepareTierPrices($productIds);
-        $productImages          = $this->prepareMediaGallery($productIds, array_keys($this->storeIdToCode));
-        $productCustomOptions   = $this->prepareCustomOptions($productIds);
-        $productBundleOptions   = $this->prepareBundleOptions($productIds);
+        $productAttributes = $this->_prepareAttributes($productIds);
+        $productInventory = $this->prepareCatalogInventory($productIds);
+        $productLinks = $this->prepareLinks($productIds);
+        $productTierPrice = $this->prepareTierPrices($productIds);
+        $productImages = $this->prepareMediaGallery($productIds, array_keys($this->storeIdToCode));
+        $productCustomOptions = $this->prepareCustomOptions($productIds);
+        $productBundleOptions = $this->prepareBundleOptions($productIds);
 
 
         foreach ($productIds as $productId) {
-            $result[$productId][self::COL_ATTRIBUTES]       = $productAttributes[$productId];
-            $result[$productId][self::COL_INVENTORY]        = $productInventory[$productId];
-            $result[$productId][self::COL_LINKS]            = $productLinks[$productId];
-            $result[$productId][self::COL_TIER_PRICE]       = $productTierPrice[$productId];
-            $result[$productId][self::COL_IMAGE_GALLERY]    = $productImages[$productId];
-            $result[$productId][self::COL_CUSTOM_OPTIONS]   = $productCustomOptions[$productId];
-            $result[$productId][self::COL_BUNDLE_OPTIONS]   = $productBundleOptions[$productId];
+            $result[$productId][self::COL_ATTRIBUTES] = $productAttributes[$productId];
+            $result[$productId][self::COL_INVENTORY] = $productInventory[$productId];
+            $result[$productId][self::COL_LINKS] = $productLinks[$productId];
+            $result[$productId][self::COL_TIER_PRICE] = $productTierPrice[$productId];
+            $result[$productId][self::COL_IMAGE_GALLERY] = $productImages[$productId];
+            $result[$productId][self::COL_CUSTOM_OPTIONS] = $productCustomOptions[$productId];
+            $result[$productId][self::COL_BUNDLE_OPTIONS] = $productBundleOptions[$productId];
         }
 
         $configurableProductIds = $this->getConfigurableProductIds($productIds);
-        if(count($configurableProductIds)) {
+        if (count($configurableProductIds)) {
             $configurableAttributes = $this->prepareConfigurableProductAttributes($configurableProductIds);
             $configurableLabels = $this->prepareConfigurableProductLabels($configurableProductIds);
 
             foreach ($configurableProductIds as $productId) {
                 $configurableData = array();
-                if(isset($configurableAttributes[$productId])) {
-                    foreach($configurableAttributes[$productId] as $attributeId => $configurableAttribute) {
+                if (isset($configurableAttributes[$productId])) {
+                    foreach ($configurableAttributes[$productId] as $attributeId => $configurableAttribute) {
                         $configurableData[$attributeId] = array(
                             'attribute_code' => $configurableAttribute['attribute_code'],
                             'attribute_id' => $attributeId,
@@ -838,11 +847,21 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
             }
 
             $configurableLinkedIds = $this->prepareConfigurableProductLinkedIds($configurableProductIds);
-            foreach($configurableLinkedIds as $productId => $value) {
+            foreach ($configurableLinkedIds as $productId => $value) {
                 $result[$productId][self::COL_SUPER_PRODUCT_SKUS] = $value;
             }
         }
 
+        if (count($result)) {
+            $transportObject = new \Magento\Framework\DataObject();
+            $transportObject->setData($result);
+
+            $this->eventManager->dispatch('cobby_catalog_product_export_after',
+                array('transport' => $transportObject));
+
+            $result = $transportObject->getData();
+        }
+        
         return $result;
     }
 

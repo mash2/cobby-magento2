@@ -31,7 +31,13 @@ class ProductManagement extends AbstractManagement// \Magento\CatalogImportExpor
     const SCOPE_STORE = 0;
 
     const SCOPE_NULL = -1;
-    
+
+    const TYPE_MODELS = 'type_models';
+
+    const PRODUCT_TYPE = 'product_type';
+
+    const USED_SKUS = 'used_skus';
+
     /**
      * Dry-runned products information from import file.
      *
@@ -235,34 +241,41 @@ class ProductManagement extends AbstractManagement// \Magento\CatalogImportExpor
 
         return $this;
     }
-    
+
+    /**
+     * @param array $rows
+     * @return array
+     */
     public function import($rows)
     {
         $result = array();
 
         $productIds = array();
         $skus = array();
+        $data = $rows;
 
         foreach ($rows as $row) {
             if (isset($row[self::COL_PRODUCT_ID])) {
                 $productIds[] = $row[self::COL_PRODUCT_ID];
             }
             $skus[] = $row[self::COL_SKU];
+            $data[self::TYPE_MODELS] = array($row[self::PRODUCT_TYPE]);
         }
 
         if ($skus) {
             $this->initSkus($skus);
 
-            $this->eventManager->dispatch('cobby_before_product_import', array(
-                'productIds' => $productIds, 'skus' => $skus));
+            $data[self::USED_SKUS] = array_values($skus);
+
+            $transportObject = new \Magento\Framework\DataObject();
+            $transportObject->setData($data);
+
+            $this->eventManager->dispatch('cobby_import_product_import_before', array(
+                'transport' => $transportObject));
 
             $this->saveProducts($rows);
 
-//        Mage::dispatchEvent('cobby_after_product_import', array(
-//            'entity_model' => $this,
-//            'entities'     => $this->_newSku
-//        ));
-
+            $this->eventManager->dispatch('cobby_import_product_import_after', array('transport' => $transportObject));
         }
 
         foreach ($this->newSkus as $sku => $data) {

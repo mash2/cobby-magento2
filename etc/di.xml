@@ -36,6 +36,9 @@
     <preference for="Mash2\Cobby\Api\ImportProductManagementInterface" type="Mash2\Cobby\Model\Import\Product\ProductManagement" />
     <preference for="Mash2\Cobby\Api\ImportInterface" type="Mash2\Cobby\Model\Import" />
 
+    <preference for="Mash2\Cobby\Api\Data\ImportProductsFinishInterface" type="Mash2\Cobby\Model\Data\ImportProductsFinish"/>
+    <preference for="Mash2\Cobby\Api\Data\ImportProductsFinishEntityInterface" type="Mash2\Cobby\Model\Data\ImportProductsFinishEntity"/>
+
     <type name="Magento\Catalog\Model\ResourceModel\Product">
         <plugin name="queue_product_plugin_resource" type="Mash2\Cobby\Model\Plugin\Catalog\Product"/>
     </type>

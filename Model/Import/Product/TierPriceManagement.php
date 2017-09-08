@@ -36,7 +36,7 @@ class TierPriceManagement extends AbstractManagement
 
         $productIds = array_keys($rows);
         $existingProductIds = $this->loadExistingProductIds($productIds);
-        $this->eventManager->dispatch('cobby_before_product_tierprice_import', array( 'products' => $productIds ));
+        $this->eventManager->dispatch('cobby_import_product_tierprice_import_before', array( 'products' => $productIds ));
 
         $groupIds = array();
         foreach ($this->customerGroupCollection as $group) {
@@ -74,7 +74,7 @@ class TierPriceManagement extends AbstractManagement
 
         $this->touchProducts($touchedProductIds);
 
-        $this->eventManager->dispatch('cobby_after_product_tierprice_import', array( 'products' => $productIds ));
+        $this->eventManager->dispatch('cobby_import_product_tierprice_import_after', array( 'products' => $productIds ));
 
         return $result;
     }
