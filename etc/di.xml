@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright 2015 Magento. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../lib/internal/Magento/Framework/ObjectManager/etc/config.xsd">
+
+    <preference for="Mash2\Cobby\Api\CalculatorInterface" type="Mash2\Cobby\Model\Calculator" />
+    <preference for="Mash2\Cobby\Api\ConfigManagementInterface" type="Mash2\Cobby\Model\ConfigManagement" />
+    <preference for="Mash2\Cobby\Api\CustomerGroupManagementInterface" type="Mash2\Cobby\Model\CustomerGroupManagement" />
+    <preference for="Mash2\Cobby\Api\CatalogProductAttributeSetInterface" type="Mash2\Cobby\Model\Catalog\Product\Attribute\Set"/>
+    <preference for="Mash2\Cobby\Api\CatalogProductAttributeInterface" type="Mash2\Cobby\Model\Catalog\Product\Attribute"/>
+    <preference for="Mash2\Cobby\Api\CatalogProductAttributeOptionInterface" type="Mash2\Cobby\Model\Catalog\Product\Attribute\Option" />
+    <preference for="Mash2\Cobby\Api\ProductManagementInterface" type="Mash2\Cobby\Model\ProductManagement" />
+    <preference for="Mash2\Cobby\Api\ExportProductManagementInterface" type="Mash2\Cobby\Model\Export\Product" />
+    <preference for="Mash2\Cobby\Api\DebugInterface" type="Mash2\Cobby\Model\Debug"/>
+
+    <preference for="Mash2\Cobby\Api\QueueRepositoryInterface" type="Mash2\Cobby\Model\QueueRepository" />
+    <preference for="Mash2\Cobby\Api\IndexerRepositoryInterface" type="Mash2\Cobby\Model\IndexerRepository" />
+    <preference for="Mash2\Cobby\Api\StoreRepositoryInterface" type="Mash2\Cobby\Model\StoreRepository" />
+    <preference for="Mash2\Cobby\Api\GroupRepositoryInterface" type="Mash2\Cobby\Model\GroupRepository" />
+    <preference for="Mash2\Cobby\Api\WebsiteRepositoryInterface" type="Mash2\Cobby\Model\WebsiteRepository" />
+    <preference for="Mash2\Cobby\Api\CategoryRepositoryInterface" type="Mash2\Cobby\Model\CategoryRepository" />
+
+    <preference for="Mash2\Cobby\Api\ImportProductLinkManagementInterface" type="Mash2\Cobby\Model\Import\Product\LinkManagement" />
+    <preference for="Mash2\Cobby\Api\ImportProductCategoryManagementInterface" type="Mash2\Cobby\Model\Import\Product\CategoryManagement" />
+    <preference for="Mash2\Cobby\Api\ImportProductTierPriceManagementInterface" type="Mash2\Cobby\Model\Import\Product\TierPriceManagement" />
+    <preference for="Mash2\Cobby\Api\ImportProductStockManagementInterface" type="Mash2\Cobby\Model\Import\Product\StockManagement" />
+    <preference for="Mash2\Cobby\Api\ImportProductImageManagementInterface" type="Mash2\Cobby\Model\Import\Product\ImageManagement" />
+    <preference for="Mash2\Cobby\Api\ImportProductGroupedManagementInterface" type="Mash2\Cobby\Model\Import\Product\GroupedManagement" />
+    <preference for="Mash2\Cobby\Api\ImportProductConfigurableManagementInterface" type="Mash2\Cobby\Model\Import\Product\ConfigurableManagement" />
+    <preference for="Mash2\Cobby\Api\ImportProductBundleManagementInterface" type="Mash2\Cobby\Model\Import\Product\BundleManagement" />
+    <preference for="Mash2\Cobby\Api\ImportProductUrlManagementInterface" type="Mash2\Cobby\Model\Import\Product\UrlManagement" />
+    <preference for="Mash2\Cobby\Api\ImportProductManagementInterface" type="Mash2\Cobby\Model\Import\Product\ProductManagement" />
+    <preference for="Mash2\Cobby\Api\ImportInterface" type="Mash2\Cobby\Model\Import" />
+
+    <type name="Magento\Catalog\Model\ResourceModel\Product">
+        <plugin name="queue_product_plugin_resource" type="Mash2\Cobby\Model\Plugin\Catalog\Product"/>
+    </type>
+    <type name="Magento\Catalog\Model\Product\Action">
+        <plugin name="queue_product_plugin_action" type="Mash2\Cobby\Model\Plugin\Catalog\Product"/>
+    </type>
+
+    <type name="Magento\Store\Model\ResourceModel\Website">
+        <plugin name="plugin_store_website" type="Mash2\Cobby\Model\Plugin\Store\Website"/>
+    </type>
+
+    <type name="Magento\Store\Model\ResourceModel\Store">
+        <plugin name="plugin_store" type="Mash2\Cobby\Model\Plugin\Store\Store"/>
+    </type>
+
+    <!--type name="Magento\Config\Model\ResourceModel\Config">
+        <plugin name="plugin_config" type="Mash2\Cobby\Model\Plugin\Config\Config"/>
+    </type-->
+
+    <type name="Magento\Config\Model\Config">
+        <plugin name="config_plugin_model" type="Mash2\Cobby\Model\Plugin\Config\Config"/>
+    </type>
+
+    <type name="Magento\Catalog\Model\ResourceModel\Category">
+        <plugin name="queue_category_plugin_resource" type="Mash2\Cobby\Model\Plugin\Catalog\Category"/>
+    </type>
+
+    <type name="Magento\Catalog\Model\ResourceModel\Attribute">
+        <plugin name="queue_attribute_plugin_resource" type="Mash2\Cobby\Model\Plugin\Catalog\Attribute"/>
+    </type>
+
+    <type name="Magento\CatalogInventory\Model\ResourceModel\Stock\Item">
+        <plugin name="queue_stock_plugin_resource" type="Mash2\Cobby\Model\Plugin\CatalogInventory\Stock"/>
+    </type>
+
+    <type name="Magento\Customer\Model\ResourceModel\Group">
+        <plugin name="queue_customer_plugin_resource" type="Mash2\Cobby\Model\Plugin\Customer\Customer"/>
+    </type>
+
+</config>

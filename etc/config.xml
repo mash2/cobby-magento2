@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <cobby>
+            <settings>
+                <choose_user>0</choose_user>
+                <license_key>cobby license key</license_key>
+                <overwrite_images>0</overwrite_images>
+                <new_api_user>cobby.api</new_api_user>
+                <cobby_version>1.40.1.1</cobby_version>
+                <product_category_position>1</product_category_position>
+            </settings>
+            <stock>
+                <manage>0</manage>
+                <quantity>0</quantity>
+                <availability>1</availability>
+            </stock>
+        </cobby>
+    </default>
+</config>

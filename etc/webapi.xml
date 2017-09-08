@@ -1,0 +1,231 @@
+<?xml version="1.0"?>
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../app/code/Magento/Webapi/etc/webapi.xsd">
+
+    <route url="/calculator/add/:num1/:num2" method="GET">
+        <service class="Mash2\Cobby\Api\CalculatorInterface" method="add"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <!-- Catalog -->
+    <route url="/cobby/product/ids" method="GET">
+        <service class="Mash2\Cobby\Api\ProductManagementInterface" method="getList"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+	
+    <route url="/cobby/product/skus" method="POST">
+        <service class="Mash2\Cobby\Api\ProductManagementInterface" method="updateSkus"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <route url="/cobby/product/websites" method="POST">
+        <service class="Mash2\Cobby\Api\ProductManagementInterface" method="updateWebsites"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <route url="/cobby/product/attributes" method="GET">
+        <service class="Mash2\Cobby\Api\CatalogProductAttributeInterface" method="export"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <route url="/cobby/product/attribute/options" method="GET">
+        <service class="Mash2\Cobby\Api\CatalogProductAttributeOptionInterface" method="export"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <route url="/cobby/product/attribute/sets" method="GET">
+        <service class="Mash2\Cobby\Api\CatalogProductAttributeSetInterface" method="export"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <route url="/cobby/product/attribute/options" method="POST">
+        <service class="Mash2\Cobby\Api\CatalogProductAttributeOptionInterface" method="import"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+
+    <!-- Store -->
+    <route url="/cobby/store/websites" method="GET">
+        <service class="Mash2\Cobby\Api\WebsiteRepositoryInterface" method="getList"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <route url="/cobby/store/storeViews" method="GET">
+        <service class="Mash2\Cobby\Api\StoreRepositoryInterface" method="getList"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <route url="/cobby/store/storeGroups" method="GET">
+        <service class="Mash2\Cobby\Api\GroupRepositoryInterface" method="getList"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <!-- Category -->
+    <route url="/cobby/categories" method="GET">
+        <service class="Mash2\Cobby\Api\CategoryRepositoryInterface" method="getList" />
+        <resources>
+            <resource ref="Mash2_Cobby::cobby" />
+        </resources>
+    </route>
+
+    <!-- Config -->
+    <route url="/cobby/configs" method="GET">
+        <service class="Mash2\Cobby\Api\ConfigManagementInterface" method="getList" />
+        <resources>
+            <resource ref="Mash2_Cobby::cobby" />
+        </resources>
+    </route>
+
+    <!-- CustomerGroup -->
+    <route url="/cobby/customer/groups" method="GET">
+        <service class="Mash2\Cobby\Api\CustomerGroupManagementInterface" method="getList"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby" />
+        </resources>
+    </route>
+
+    <!-- Queue -->
+    <route url="/cobby/queue/max" method="GET">
+        <service class="Mash2\Cobby\Api\QueueRepositoryInterface" method="getMax"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby" />
+        </resources>
+    </route>
+
+    <route url="/cobby/queue" method="GET">
+        <service class="Mash2\Cobby\Api\QueueRepositoryInterface" method="getList"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby" />
+        </resources>
+    </route>
+
+    <route url="/cobby/queue" method="DELETE">
+        <service class="Mash2\Cobby\Api\QueueRepositoryInterface" method="delete"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby" />
+        </resources>
+    </route>
+
+    <!-- Indexer -->
+
+    <route url="/cobby/indexer" method="GET">
+        <service class="Mash2\Cobby\Api\IndexerRepositoryInterface" method="export"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby" />
+        </resources>
+    </route>
+
+    <route url="/cobby/indexer/reindex" method="POST">
+        <service class="Mash2\Cobby\Api\IndexerRepositoryInterface" method="reindex"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <!-- Export -->
+    <route url="/cobby/export/products" method="POST">
+        <service class="Mash2\Cobby\Api\ExportProductManagementInterface" method="export"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <route url="/cobby/debug" method="GET">
+        <service class="Mash2\Cobby\Api\DebugInterface" method="export"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <!-- Import -->
+    <route url="/cobby/import/products" method="POST">
+        <service class="Mash2\Cobby\Api\ImportInterface" method="importProducts"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <route url="/cobby/import/products/links" method="POST">
+        <service class="Mash2\Cobby\Api\ImportInterface" method="importProductLinks"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <route url="/cobby/import/products/categories" method="POST">
+        <service class="Mash2\Cobby\Api\ImportInterface" method="importProductCategories"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <route url="/cobby/import/products/tierPrices" method="POST">
+        <service class="Mash2\Cobby\Api\ImportInterface" method="importProductTierPrices"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <route url="/cobby/import/products/stocks" method="POST">
+        <service class="Mash2\Cobby\Api\ImportInterface" method="importProductStocks"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <route url="/cobby/import/products/images" method="POST">
+        <service class="Mash2\Cobby\Api\ImportInterface" method="importProductImages"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+	<route url="/cobby/import/products/urls" method="POST">
+        <service class="Mash2\Cobby\Api\ImportInterface" method="importProductUrls"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+	
+    <route url="/cobby/import/products/grouped" method="POST">
+        <service class="Mash2\Cobby\Api\ImportInterface" method="importProductGrouped"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <route url="/cobby/import/products/configurable" method="POST">
+        <service class="Mash2\Cobby\Api\ImportInterface" method="importProductConfigurable"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <route url="/cobby/import/products/bundle" method="POST">
+        <service class="Mash2\Cobby\Api\ImportInterface" method="importProductBundle"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+</routes>

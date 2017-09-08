@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Representation of Webapi module in System Configuration (Magento admin panel).
+ *
+ * Copyright © 2015 Magento. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="cobby" translate="label" type="text" sortOrder="150" showInDefault="1">
+            <label>cobby</label>
+            <tab>service</tab>
+            <resource>Mash2_Cobby::config_cobby</resource>
+            <group id="settings" translate="label" type="text" sortOrder="100" showInDefault="1">
+                <label>General Settings</label>
+                <attribute type="expanded">1</attribute>
+                <field id="license_key" translate="label tooltip" type="text" sortOrder="10" showInDefault="1">
+                    <label>License key</label>
+                    <tooltip>The license key will be sent via email.</tooltip>
+                    <validate>validate-alphanum required-entry</validate>
+                </field>
+                <field id="contact_email" translate="label comment tooltip" type="text" sortOrder="20" showInDefault="1">
+                    <label>Contact Email</label>
+                    <comment>All cobby notifications will be sent to the Contact Email.</comment>
+                    <tooltip>Notifictaions for rebuilt indexes, Errors, available cobby Updates and more will be sent to this Email. No Newsletter or commercials.</tooltip>
+                    <validate>validate-email required-entry</validate>
+                </field>
+
+                <!-- existing user -->
+                <field id="api_user" translate="label" type="text" sortOrder="40" showInDefault="1">
+                    <label>User Name</label>
+                    <validate>required-entry</validate>
+                </field>
+
+                <field id="api_key" translate="label tooltip comment" type="obscure" sortOrder="50" showInDefault="1">
+                    <label>API Key</label>
+                    <tooltip>Only users with ACL for cobby will be shown.</tooltip>
+                    <comment>Fill in the API key of the chosen user.</comment>
+                    <validate>required-entry</validate>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+            </group>
+
+            <group id="stock" translate="label" type="text" sortOrder="200" showInDefault="1">
+                <label>Stock Settings</label>
+                <field id="manage" translate="label tooltip" type="select" sortOrder="10" showInDefault="1">
+                    <label>Stock Management</label>
+                    <tooltip>change how cobby handles the stock-attributes. Set disabled/readonly to disallow changes to stock from cobby</tooltip>
+                    <source_model>Mash2\Cobby\Model\Source\Managestock</source_model>
+                    <validate>validate-select</validate>
+                </field>
+                <field id="quantity" translate="label tooltip" type="text" sortOrder="20" showInDefault="1">
+                    <label>Default Quantity</label>
+                    <depends><field id="manage" separator=",">1,2</field></depends>
+                    <tooltip>what shall cobby transmit for quantity on product-creation?</tooltip>
+                    <comment>fixed constant to use for new products</comment>
+                    <validate>validate-number required-entry</validate>
+                </field>
+                <field id="availability" translate="label tooltip" type="select" sortOrder="30" showInDefault="1">
+                    <label>Default Stock Availability</label>
+                    <depends><field id="manage" separator=",">1,2</field></depends>
+                    <tooltip>what shall cobby transmit for Stock availability on product-creation?</tooltip>
+                    <comment>fixed constant to use for new products</comment>
+                    <source_model>Magento\CatalogInventory\Model\Source\Stock</source_model>
+                    <validate>validate-select</validate>
+                </field>
+            </group>
+
+            <group id="htaccess" translate="label" type="text" sortOrder="300" showInDefault="1">
+                <label>.htaccess</label>
+                <field id="user" translate="label" type="text" sortOrder="20" showInDefault="1">
+                    <label>.htaccess user</label>
+                </field>
+                <field id="password" translate="label" type="obscure" sortOrder="30" showInDefault="1">
+                    <label>.htaccess password</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+            </group>
+
+            <group id="advanced" translate="label" type="text" sortOrder="400" showInDefault="1">
+                <label>Advanced</label>
+                <field id="overwrite_images" translate="label tooltip" type="select" sortOrder="51" showInDefault="1">
+                    <label>Overwrite Images</label>
+                    <comment>Overwrite existing images with same names to prevent creation of duplicates.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <config_path>cobby/settings/overwrite_images</config_path>
+                </field>
+            </group>
+
+            <group id="version" translate="label" type="text" sortOrder="500" showInDefault="1">
+                <attribute type="expanded">1</attribute>
+                <field id="version" translate="label" type="label" showInDefault="1">
+                    <label>cobby Version</label>
+                    <config_path>cobby/settings/cobby_version</config_path>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>
+

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+
+    <event name="admin_system_config_changed_section_cobby">
+        <observer name="cobby_config_saved" instance="Mash2\Cobby\Observer\SaveConfig" />
+    </event>
+    <!--event name="admin_system_config_changed_section_catalog">
+        <observer name="core_config_data_save" instance="Mash2\Cobby\Observer\CoreConfigDataSave" />
+    </event-->
+</config>
