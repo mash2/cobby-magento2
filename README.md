@@ -1,9 +1,8 @@
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/slavkodick/cobby.svg?style=flat-square)](https://packagist.org/packages/slavkodick/cobby)
-![travis build status](https://travis-ci.org/slavkodick/cobby.svg?branch=master)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/mash2/cobby-magento2.svg?style=flat-square)](https://packagist.org/packages/mash2/cobby-magento2)
+[![travis build status](https://travis-ci.org/mash2/cobby-magento2.svg?branch=master)](https://travis-ci.org/mash2/cobby-magento2)
 [![PHP 5.6](https://img.shields.io/badge/php-5.6-blue.svg)](http://www.php.net)
 [![PHP 7.0](https://img.shields.io/badge/php-7.0-blue.svg)](http://www.php.net)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/91c4bcce00c94e36b8f8359375d2ec79)](https://www.codacy.com/app/slavkodick/cobby?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=slavkodick/cobby&amp;utm_campaign=Badge_Grade)
-
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/932513b9a20d4378842bb532884b7af5)](https://www.codacy.com/app/mash2/cobby-magento2?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mash2/cobby-magento2/&amp;utm_campaign=Badge_Grade)
 
 # cobby
 product management for magento2 shops

@@ -28,23 +28,21 @@ install:
 
   # install cobby
   - cd ce
-  - composer require slavkodick/cobby
+  - composer require mash2/cobby-magento2
 
   # update cs and standards
   - composer require squizlabs/php_codesniffer:*
   - composer require magento-ecg/coding-standard:*
 
   # override cobby with the commited version
-  - cd $HOME/ce/vendor/slavkodick/cobby/
+  - cd $HOME/ce/vendor/mash2/cobby-magento2/
   - rm -rf *
-#  - ls $TRAVIS_BUILD_DIR/
-#  - sleep 10
-  - cp -R $TRAVIS_BUILD_DIR/* $HOME/ce/vendor/slavkodick/cobby/
+  - cp -R $TRAVIS_BUILD_DIR/* $HOME/ce/vendor/mash2/cobby-magento2/
   - cd $HOME/ce
   - composer dump-autoload
 
 script:
   # run phpcs
   - cd $HOME/ce/vendor
-  - ./bin/phpcs --standard=./magento-ecg/coding-standard/EcgM2/ --warning-severity=6 ./slavkodick/cobby/
+  - ./bin/phpcs --standard=./magento-ecg/coding-standard/EcgM2/ --warning-severity=6 ./mash2/cobby-magento2/
  
