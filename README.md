@@ -18,5 +18,5 @@ product management for magento2 shops
 
 ## Installation
 ### Install with composer package
-* ```composer require "slavkodick/cobby:dev-master"```
+* ```composer require "mash2/cobby-magento2"```
 
