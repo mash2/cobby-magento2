@@ -16,12 +16,20 @@ class ConfigurableManagement extends AbstractManagement implements \Mash2\Cobby\
     private $prodAttrColFac;
 
     /**
+     * @var \Psr\Log\LoggerInterface
+     */
+    private $logger;
+
+    /**
      * constructor.
-     * @param \Magento\Framework\App\ResourceConnection $resourceModel
-     * @param \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory
-     * @param \Magento\Framework\Event\ManagerInterface $eventManager
-     * @param \Magento\ImportExport\Model\ResourceModel\Helper $resourceHelper
+     *
+     * @param \Magento\Framework\App\ResourceConnection                                $resourceModel
+     * @param \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory           $productCollectionFactory
+     * @param \Magento\Framework\Event\ManagerInterface                                $eventManager
+     * @param \Magento\ImportExport\Model\ResourceModel\Helper                         $resourceHelper
      * @param \Magento\Catalog\Model\ResourceModel\Product\Attribute\CollectionFactory $prodAttrColFac
+     * @param \Psr\Log\LoggerInterface                                                 $logger
+     * @param \Mash2\Cobby\Model\Product                                               $product
      */
     public function __construct(
         \Magento\Framework\App\ResourceConnection $resourceModel,
@@ -29,10 +37,12 @@ class ConfigurableManagement extends AbstractManagement implements \Mash2\Cobby\
         \Magento\Framework\Event\ManagerInterface $eventManager,
         \Magento\ImportExport\Model\ResourceModel\Helper $resourceHelper,
         \Magento\Catalog\Model\ResourceModel\Product\Attribute\CollectionFactory $prodAttrColFac,
+        \Psr\Log\LoggerInterface $logger,
         \Mash2\Cobby\Model\Product $product
     ) {
         parent::__construct($resourceModel, $productCollectionFactory, $eventManager, $resourceHelper, $product);
         $this->prodAttrColFac = $prodAttrColFac;
+        $this->logger = $logger;
     }
 
     private function isAttributeSuper($attrCode)
@@ -97,6 +107,7 @@ class ConfigurableManagement extends AbstractManagement implements \Mash2\Cobby\
                 }
             } catch (\Exception $e) {
                 // ignore exceptions connected with source models
+                $this->logger->info($e);
             }
         }
         return $options;

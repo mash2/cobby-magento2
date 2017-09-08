@@ -37,11 +37,12 @@ class Queue extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * constructor.
+     *
      * @param \Magento\Framework\App\Helper\Context $context
-     * @param CobbyApi $cobbyApi
-     * @param \Mash2\Cobby\Model\QueueFactory $queueFactory
-     * @param \Magento\Framework\Registry $registry
-     * @param Settings $cobbySettings
+     * @param CobbyApi                              $cobbyApi
+     * @param \Mash2\Cobby\Model\QueueFactory       $queueFactory
+     * @param \Magento\Framework\Registry           $registry
+     * @param Settings                              $cobbySettings
      */
     public function __construct(
         \Magento\Framework\App\Helper\Context $context,
@@ -105,7 +106,7 @@ class Queue extends \Magento\Framework\App\Helper\AbstractHelper
                 $this->cobbyApi->notifyCobbyService($entity, $action, $queueIds[0]);
 
             } catch (\Exception $e) {
-
+                $this->_logger->info($e);
             }
         }
 

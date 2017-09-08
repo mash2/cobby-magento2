@@ -25,10 +25,11 @@ class CobbyApi extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * constructor.
-     * @param \Magento\Framework\App\Helper\Context $context
-     * @param \Mash2\Cobby\Helper\Settings $settings
+     *
+     * @param \Magento\Framework\App\Helper\Context     $context
+     * @param \Mash2\Cobby\Helper\Settings              $settings
      * @param \Magento\Framework\HTTP\ZendClientFactory $httpClientFactory
-     * @param \Magento\Framework\App\ProductMetadata $productMetadata
+     * @param \Magento\Framework\App\ProductMetadata    $productMetadata
      */
     public function __construct(
         \Magento\Framework\App\Helper\Context $context,
@@ -127,9 +128,7 @@ class CobbyApi extends \Magento\Framework\App\Helper\AbstractHelper
             try {
                 $this->restPost('notify', $request);
             } catch (\Exception $e) { // Zend_Http_Client_Adapter_Exception
-                if ($e->getCode() != 1000) { //Timeout
-//                    throw $e;
-                }
+                $this->_logger->info($e);
             }
         }
     }

@@ -262,6 +262,7 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         if (strpos($url, 'http') === 0 && strpos($url, '://') !== false) {
             try {
                 $dir = $this->mediaDirectory->getAbsolutePath('pub/media/import');
+                // @codingStandardsIgnoreStart
                 $fileHandle = fopen($dir . '/' . basename($fileName), 'w+');
                 $ch = curl_init($url);
                 curl_setopt($ch, CURLOPT_TIMEOUT, 50);
@@ -277,12 +278,14 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                 curl_exec($ch);
                 curl_close($ch);
                 fclose($fileHandle);
+                // @codingStandardsIgnoreEnd
             } catch (\Exception $e) {
                 throw new \Exception('Download of file ' . $url . ' failed: ' . $e->getMessage());
             }
         }
     }
 
+    // @codingStandardsIgnoreStart
     private function processRows($rows)
     {
         $mediaGallery = array();
@@ -320,12 +323,16 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
 
                     //only copy if exists in import folder
                     if (is_file($this->fileUploader->getTmpDir() . '/' . $imageData['import'])) {
+                        // @codingStandardsIgnoreStart
                         copy($this->fileUploader->getTmpDir() . '/' . $imageData['import'], $this->fileUploader->getTmpDir() . '/'. $imageData['name']);
+                        // @codingStandardsIgnoreEnd
                     }
 
                 }else  if(!empty($imageData['upload'])) {
                     if(empty($imageData['name'])) {
+                        // @codingStandardsIgnoreStart
                         $imageData['name'] = basename(parse_url($imageData['upload'], PHP_URL_PATH));
+                        // @codingStandardsIgnoreEnd
                     }
                     $this->_copyExternalImageFile($imageData['upload'], $imageData['name']);
                 }
@@ -386,6 +393,7 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
 
         return $mediaGallery;
     }
+    // @codingStandardsIgnoreEnd
 
     private function uploadMediaFiles($fileName)
     {
