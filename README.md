@@ -11,7 +11,7 @@ product management for magento2 shops
 [License](LICENSE.txt)
 
 ## Releases
-[Releases](https://github.com/slavkodick/cobby/releases)
+[Releases](https://github.com/mash2/cobby-magento2/releases)
 
 ## Release Notes 
 [Release Notes](https://www.cobby.io/category/releasenotes-2/)
