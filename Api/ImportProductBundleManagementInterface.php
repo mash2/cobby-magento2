@@ -9,7 +9,7 @@ interface ImportProductBundleManagementInterface
     /**
      * @api
      * @param array $rows
-     * @return array
+     * @return mixed
      */
     public function import($rows);
 }

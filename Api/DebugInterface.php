@@ -9,7 +9,7 @@ namespace Mash2\Cobby\Api;
 interface DebugInterface
 {
     /**
-     * @return array
+     * @return mixed
      */
     public function export();
 }
