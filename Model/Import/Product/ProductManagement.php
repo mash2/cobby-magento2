@@ -53,6 +53,20 @@ class ProductManagement extends AbstractManagement// \Magento\CatalogImportExpor
     protected $newSkus = array();
 
     /**
+     * Codes of attributes which are displayed as dates
+     *
+     * @var array
+     */
+    protected $dateAttrCodes = [
+        'special_from_date',
+        'special_to_date',
+        'news_from_date',
+        'news_to_date',
+        'custom_design_from',
+        'custom_design_to'
+    ];
+
+    /**
      * Existing products SKU-related information in form of array:
      *
      * [SKU] => array(
@@ -543,7 +557,14 @@ class ProductManagement extends AbstractManagement// \Magento\CatalogImportExpor
                     $storeIds  = array(0);
 
                     if($attrValue != self::COBBY_DEFAULT) {
-                        if ('datetime' == $attribute->getBackendType() && strtotime($attrValue)) {
+                        if ('datetime' == $attribute->getBackendType() && (in_array(
+                            $attribute->getAttributeCode(),
+                            $this->dateAttrCodes)
+                                || $attribute->getIsUserDefined()
+                            )
+                        ) {
+                            $attrValue = $this->dateTime->formatDate($attrValue, false);
+                        } elseif ('datetime' == $attribute->getBackendType() && strtotime($attrValue)) {
                             $attrValue = $this->dateTime->gmDate(
                                 'Y-m-d H:i:s',
                                 $this->_localeDate->date($attrValue)->getTimestamp()
