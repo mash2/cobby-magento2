@@ -73,7 +73,7 @@ interface ImportManagementInterface
     /**
      * @api
      * @param string $jsonData
-     * @return array
+     * @return mixed
      */
     public function importProductBundle($jsonData);
 }
