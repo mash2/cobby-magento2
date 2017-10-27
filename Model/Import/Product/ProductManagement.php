@@ -586,8 +586,8 @@ class ProductManagement extends AbstractManagement// \Magento\CatalogImportExpor
                         }
                     }
 
-                    foreach ($storeIds as $storeId) {
-                        $attributes[$attrTable][$sku][$attrId][$storeId] = $attrValue;
+                    foreach ($storeIds as $websiteStoreId) {
+                        $attributes[$attrTable][$sku][$attrId][$websiteStoreId] = $attrValue;
                     }
 
                     // restore 'backend_model' to avoid 'default' setting
