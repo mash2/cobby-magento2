@@ -1,6 +1,15 @@
 <?php
 namespace Mash2\Cobby\Model\Import\Product;
 
+use Magento\Catalog\Model\Category;
+use Magento\Catalog\Model\Product\Visibility;
+use Magento\UrlRewrite\Service\V1\Data\UrlRewrite;
+use Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator;
+use Magento\UrlRewrite\Model\UrlFinderInterface;
+use Magento\Store\Model\Store;
+use Magento\UrlRewrite\Model\UrlPersistInterface;
+use Magento\UrlRewrite\Service\V1\Data\UrlRewriteFactory;
+
 
 class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\ImportProductUrlManagementInterface
 {
@@ -10,6 +19,16 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
      * Url key attribute code
      */
     const URL_KEY = 'url_key';
+
+    /**
+     * Column product store.
+     */
+    const COL_STORE_ID = 'store_id';
+
+    /**
+     * Column product id.
+     */
+    const COL_PRODUCT_ID = 'product_id';
 
     /**
      * Column product name.
@@ -46,6 +65,47 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
      */
     protected $storeIdToWebsiteStoreIds = array();
 
+    /** @var UrlPersistInterface */
+    protected $urlPersist;
+
+    /** @var array */
+    protected $products = [];
+
+    /** @var \Magento\Catalog\Model\ProductFactory $catalogProductFactory */
+    protected $catalogProductFactory;
+
+    /** @var UrlFinderInterface */
+    protected $urlFinder;
+
+    /** @var array */
+    protected $storesCache = [];
+
+    /** @var array */
+    protected $categoryCache = [];
+
+    /** @var array */
+    protected $websitesToStoreIds;
+
+    /**
+     * @var \Magento\CatalogImportExport\Model\Import\Product\CategoryProcessor
+     */
+    protected $categoryProcessor;
+
+    /** @var \Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator */
+    protected $productUrlPathGenerator;
+
+    /** @var array */
+    protected $vitalForGenerationFields = [
+        'sku',
+        'url_key',
+        'url_path',
+        'name',
+        'visibility',
+    ];
+
+    /** @var UrlRewriteFactory */
+    protected $urlRewriteFactory;
+
     /**
      * constructor.
      * @param \Magento\Framework\App\ResourceConnection $resourceModel
@@ -54,18 +114,25 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
      * @param \Magento\ImportExport\Model\ResourceModel\Helper $resourceHelper
      * @param \Mash2\Cobby\Helper\Settings $settings
      * @param \Magento\Catalog\Model\Product\Url $productUrl
+     * @param UrlFinderInterface $urlFinder
      * @param \Magento\CatalogImportExport\Model\Import\Proxy\Product\ResourceModelFactory $resourceFactory
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      */
     public function __construct(
         \Magento\Framework\App\ResourceConnection $resourceModel,
         \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory,
+        \Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator $productUrlPathGenerator,
         \Magento\Framework\Event\ManagerInterface $eventManager,
         \Magento\ImportExport\Model\ResourceModel\Helper $resourceHelper,
         \Mash2\Cobby\Helper\Settings $settings,
         \Magento\Catalog\Model\Product\Url $productUrl,
+        UrlFinderInterface $urlFinder,
         \Magento\CatalogImportExport\Model\Import\Proxy\Product\ResourceModelFactory $resourceFactory,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
+        UrlPersistInterface $urlPersist,
+        \Magento\Catalog\Model\ProductFactory $catalogProductFactory,
+        UrlRewriteFactory $urlRewriteFactory,
+        \Magento\CatalogImportExport\Model\Import\Product\CategoryProcessor $categoryProcessor,
         \Mash2\Cobby\Model\Product $product
     ) {
         parent::__construct($resourceModel, $productCollectionFactory, $eventManager, $resourceHelper, $product);
@@ -73,6 +140,13 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
         $this->productUrl = $productUrl;
         $this->urlKeyAttribute = $resourceFactory->create()->getAttribute('url_key');
         $this->storeManager = $storeManager;
+        $this->urlPersist = $urlPersist;
+        $this->catalogProductFactory = $catalogProductFactory;
+        $this->urlFinder = $urlFinder;
+        $this->urlRewriteFactory = $urlRewriteFactory;
+        $this->productUrlPathGenerator = $productUrlPathGenerator;
+        $this->categoryProcessor = $categoryProcessor;
+
         $this->initStores();
     }
 
@@ -93,28 +167,320 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
     {
         $result = array();
 
-        $productIds = array_keys($rows);
+        $productIds = array_column($rows, 'product_id');
         $existingProductIds = $this->loadExistingProductIds($productIds);
         $changedProductIds = array();
         $this->eventManager->dispatch('cobby_import_product_url_import_before', array( 'products' => $productIds ));
 
         $attributesData = array();
-        foreach($rows as $productId => $rowData) {
+        foreach($rows as $rowData) {
+            $productId = $rowData[self::COL_PRODUCT_ID];
             if (!in_array($productId, $existingProductIds)) {
                 continue;
             }
 
-            $attributesData[$productId] = $this->prepareUrlAttributes($productId, $rowData);
+            $storeValues = $rowData['values'];
+            $attributesData[$productId] = $this->prepareUrlAttributes($productId, $storeValues);
+            foreach($storeValues as $storeValue) {
+                $this->_populateForUrlGeneration($productId, $rowData['website_ids'], $rowData['category_ids'], $storeValue);
+            }
             $changedProductIds[] = $productId;
         }
 
         $this->saveProductAttributes($attributesData);
         $this->touchProducts($changedProductIds);
 
+        $productUrls = $this->generateUrls();
+        if ($productUrls) {
+            $this->urlPersist->replace($productUrls);
+        }
+
         $this->eventManager->dispatch('cobby_import_product_url_import_after', array( 'products' => $changedProductIds ));
 
         $result = $attributesData;
         return $result;
+    }
+
+    /**
+     * Create product model from imported data for URL rewrite purposes.
+     *
+     * @param $productId
+     * @param $websiteIds
+     * @param $categoryIds
+     * @param array $rowData
+     *
+     * @return UrlManagement
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     */
+    protected function _populateForUrlGeneration($productId, $websiteIds, $categoryIds, $rowData)
+    {
+        $rowData['entity_id'] = $productId;
+
+        $product = $this->catalogProductFactory->create();
+        $product->setId($rowData['entity_id']);
+
+        foreach ($this->vitalForGenerationFields as $field) {
+            if (isset($rowData[$field])) {
+                $product->setData($field, $rowData[$field]);
+            }
+        }
+
+        $this->categoryCache[$productId] = $categoryIds;
+        foreach ($websiteIds as $websiteId) {
+            if (!isset($this->websitesToStoreIds[$websiteId])) {
+                $this->websitesToStoreIds[$websiteId] = $this->storeManager->getWebsite($websiteId)->getStoreIds();
+            }
+        }
+
+        $storeId = $rowData[self::COL_STORE_ID];
+        $product->setStoreId($storeId);
+
+        if ($this->isGlobalScope($product->getStoreId())) {
+            $this->populateGlobalProduct($product, $websiteIds);
+        } else {
+            $this->addProductToImport($product, $product->getStoreId());
+        }
+
+        return $this;
+    }
+
+    /**
+     * Populate global product
+     *
+     * @param \Magento\Catalog\Model\Product $product
+     * @param $productWebsiteIds
+     * @return $this
+     */
+    protected function populateGlobalProduct($product, $productWebsiteIds)
+    {
+        foreach ($productWebsiteIds as $websiteId) {
+            foreach ($this->websitesToStoreIds[$websiteId] as $storeId) {
+                $this->storesCache[$storeId] = true;
+                if (!$this->isGlobalScope($storeId)) {
+                    $this->addProductToImport($product, $storeId);
+                }
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * Check is global scope
+     *
+     * @param int|null $storeId
+     * @return bool
+     */
+    protected function isGlobalScope($storeId)
+    {
+        return null === $storeId || $storeId == Store::DEFAULT_STORE_ID;
+    }
+
+    /**
+     * Generate product url rewrites
+     *
+     * @return \Magento\UrlRewrite\Service\V1\Data\UrlRewrite[]
+     */
+    protected function generateUrls()
+    {
+        /**
+         * @var $urls \Magento\UrlRewrite\Service\V1\Data\UrlRewrite[]
+         */
+        $urls = array_merge(
+            $this->canonicalUrlRewriteGenerate(),
+            $this->categoriesUrlRewriteGenerate()
+//            $this->currentUrlRewritesRegenerate()
+        );
+
+        /* Reduce duplicates. Last wins */
+        $result = [];
+        foreach ($urls as $url) {
+            $result[$url->getTargetPath() . '-' . $url->getStoreId()] = $url;
+        }
+        return $result;
+    }
+
+    /**
+     * Generate list based on store view
+     *
+     * @return UrlRewrite[]
+     */
+    protected function canonicalUrlRewriteGenerate()
+    {
+        $urls = [];
+        foreach ($this->products as $productId => $productsByStores) {
+            foreach ($productsByStores as $storeId => $product) {
+                if ($this->productUrlPathGenerator->getUrlPath($product)) {
+                    $urls[] = $this->urlRewriteFactory->create()
+                        ->setEntityType(ProductUrlRewriteGenerator::ENTITY_TYPE)
+                        ->setEntityId($productId)
+                        ->setRequestPath($this->productUrlPathGenerator->getUrlPathWithSuffix($product, $storeId))
+                        ->setTargetPath($this->productUrlPathGenerator->getCanonicalUrlPath($product))
+                        ->setStoreId($storeId);
+                }
+            }
+        }
+
+        return $urls;
+    }
+
+    /**
+     * Generate list based on categories
+     *
+     * @return UrlRewrite[]
+     */
+    protected function categoriesUrlRewriteGenerate()
+    {
+        $urls = [];
+        foreach ($this->products as $productId => $productsByStores) {
+            foreach ($productsByStores as $storeId => $product) {
+                foreach ($this->categoryCache[$productId] as $categoryId) {
+                    $category = $this->categoryProcessor->getCategoryById($categoryId);
+                    if ($category->getParentId() == Category::TREE_ROOT_ID) {
+                        continue;
+                    }
+                    $requestPath = $this->productUrlPathGenerator->getUrlPathWithSuffix($product, $storeId, $category);
+                    $urls[] = $this->urlRewriteFactory->create()
+                        ->setEntityType(ProductUrlRewriteGenerator::ENTITY_TYPE)
+                        ->setEntityId($productId)
+                        ->setRequestPath($requestPath)
+                        ->setTargetPath($this->productUrlPathGenerator->getCanonicalUrlPath($product, $category))
+                        ->setStoreId($storeId)
+                        ->setMetadata(['category_id' => $category->getId()]);
+                }
+            }
+        }
+        return $urls;
+    }
+
+    /**
+     * Generate list based on current rewrites
+     *
+     * @return UrlRewrite[]
+     */
+    protected function currentUrlRewritesRegenerate()
+    {
+        $currentUrlRewrites = $this->urlFinder->findAllByData(
+            [
+                UrlRewrite::STORE_ID => array_keys($this->storesCache),
+                UrlRewrite::ENTITY_ID => array_keys($this->products),
+                UrlRewrite::ENTITY_TYPE => ProductUrlRewriteGenerator::ENTITY_TYPE,
+            ]
+        );
+
+        $urlRewrites = [];
+        foreach ($currentUrlRewrites as $currentUrlRewrite) {
+            $category = $this->retrieveCategoryFromMetadata($currentUrlRewrite);
+            if ($category === false) {
+                continue;
+            }
+            $url = $currentUrlRewrite->getIsAutogenerated()
+                ? $this->generateForAutogenerated($currentUrlRewrite, $category)
+                : $this->generateForCustom($currentUrlRewrite, $category);
+            $urlRewrites = array_merge($urlRewrites, $url);
+        }
+
+        return $urlRewrites;
+    }
+
+    /**
+     * @param UrlRewrite $url
+     * @param Category $category
+     * @return array
+     */
+    protected function generateForAutogenerated($url, $category)
+    {
+        $storeId = $url->getStoreId();
+        $productId = $url->getEntityId();
+        if (isset($this->products[$productId][$storeId])) {
+            $product = $this->products[$productId][$storeId];
+            if (!$product->getData('save_rewrites_history')) {
+                return [];
+            }
+            $targetPath = $this->productUrlPathGenerator->getUrlPathWithSuffix($product, $storeId, $category);
+            if ($url->getRequestPath() === $targetPath) {
+                return [];
+            }
+            return [
+                $this->urlRewriteFactory->create()
+                    ->setEntityType(ProductUrlRewriteGenerator::ENTITY_TYPE)
+                    ->setEntityId($productId)
+                    ->setRequestPath($url->getRequestPath())
+                    ->setTargetPath($targetPath)
+                    ->setRedirectType(OptionProvider::PERMANENT)
+                    ->setStoreId($storeId)
+                    ->setDescription($url->getDescription())
+                    ->setIsAutogenerated(0)
+                    ->setMetadata($url->getMetadata())
+            ];
+        }
+        return [];
+    }
+
+    /**
+     * @param UrlRewrite $url
+     * @param Category $category
+     * @return array
+     */
+    protected function generateForCustom($url, $category)
+    {
+        $storeId = $url->getStoreId();
+        $productId = $url->getEntityId();
+        if (isset($this->products[$productId][$storeId])) {
+            $product = $this->products[$productId][$storeId];
+            $targetPath = $url->getRedirectType()
+                ? $this->productUrlPathGenerator->getUrlPathWithSuffix($product, $storeId, $category)
+                : $url->getTargetPath();
+            if ($url->getRequestPath() === $targetPath) {
+                return [];
+            }
+            return [
+                $this->urlRewriteFactory->create()
+                    ->setEntityType(ProductUrlRewriteGenerator::ENTITY_TYPE)
+                    ->setEntityId($productId)
+                    ->setRequestPath($url->getRequestPath())
+                    ->setTargetPath($targetPath)
+                    ->setRedirectType($url->getRedirectType())
+                    ->setStoreId($storeId)
+                    ->setDescription($url->getDescription())
+                    ->setIsAutogenerated(0)
+                    ->setMetadata($url->getMetadata())
+            ];
+        }
+        return [];
+    }
+
+    /**
+     * @param UrlRewrite $url
+     * @return Category|null|bool
+     */
+    protected function retrieveCategoryFromMetadata($url)
+    {
+        $metadata = $url->getMetadata();
+        if (isset($metadata['category_id'])) {
+            $category = $this->categoryProcessor->getCategoryById($metadata['category_id']);
+            return $category === null ? false : $category;
+        }
+        return null;
+    }
+
+    /**
+     * Add product to import
+     *
+     * @param \Magento\Catalog\Model\Product $product
+     * @param string $storeId
+     * @return $this
+     */
+    protected function addProductToImport($product, $storeId)
+    {
+        if ($product->getVisibility() == (string)Visibility::getOptionArray()[Visibility::VISIBILITY_NOT_VISIBLE]) {
+            return $this;
+        }
+        if (!isset($this->products[$product->getId()])) {
+            $this->products[$product->getId()] = [];
+        }
+        $this->products[$product->getId()][$storeId] = $product;
+        return $this;
     }
 
     private function prepareUrlAttributes($productId, $storeValues)
@@ -188,76 +554,12 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
         return $this;
     }
 
-    /**
-     * Retrieve product rewrite suffix for store
-     *
-     * @param int $storeId
-     * @return string
-     */
-    protected function getProductUrlSuffix($storeId = null)
-    {
-        if (!isset($this->productUrlSuffix[$storeId])) {
-            $this->productUrlSuffix[$storeId] = $this->scopeConfig->getValue(
-                \Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator::XML_PATH_PRODUCT_URL_SUFFIX,
-                \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
-                $storeId
-            );
-        }
-        return $this->productUrlSuffix[$storeId];
-    }
-
     private function formatUrlKey($productId, $urlKey) {
         if ( !empty($urlKey) && $urlKey != ProductManagement::COBBY_DEFAULT) {
             $urlKey = $this->productUrl->formatUrlKey($urlKey);
-
-            //TODO: M2
-//            if($this->isEnterprise) {
-//                $urlKey = $this->_generateNextUrlKeyWithSuffix($productId, $urlKey);
-//            }
         }
 
         return $urlKey;
     }
-    
-    /**
-     * @param array $rowData
-     * @return string
-     */
-    protected function getUrlKey($productId, $rowData)
-    {
-        if (!empty($rowData[self::URL_KEY])) {
-            $this->productUrlKeys[$productId] = $rowData[self::URL_KEY];
-        }
-        $urlKey = !empty($this->productUrlKeys[$productId])
-            ? $this->productUrlKeys[$productId]
-            : $this->productUrl->formatUrlKey($rowData[self::COL_NAME]);
-        return $urlKey;
-    }
 
-    /**
-     * Check that url_keys are not assigned to other products in DB
-     *
-     * @return void
-     */
-    protected function checkUrlKeyDuplicates()
-    {
-        $resource = $this->getResource();
-        foreach ($this->urlKeys as $storeId => $urlKeys) {
-            $urlKeyDuplicates = $this->_connection->fetchAssoc(
-                $this->_connection->select()->from(
-                    ['url_rewrite' => $resource->getTable('url_rewrite')],
-                    ['request_path', 'store_id']
-                )->joinLeft(
-                    ['cpe' => $resource->getTable('catalog_product_entity')],
-                    "cpe.entity_id = url_rewrite.entity_id"
-                )->where('request_path IN (?)', array_keys($urlKeys))
-                    ->where('store_id IN (?)', $storeId)
-                    ->where('cpe.sku not in (?)', array_values($urlKeys))
-            );
-            foreach ($urlKeyDuplicates as $entityData) {
-                $rowNum = $this->rowNumbers[$entityData['store_id']][$entityData['request_path']];
-                $this->addRowError(ValidatorInterface::ERROR_DUPLICATE_URL_KEY, $rowNum);
-            }
-        }
-    }
 }
