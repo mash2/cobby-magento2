@@ -88,7 +88,7 @@ class ProductManagement implements \Mash2\Cobby\Api\ProductManagementInterface
         $rows = $this->jsonHelper->jsonDecode($jsonData);
 
         $result = array();
-        $factory = $this->productFactory->create();
+        $productModel = $this->productFactory->create();
 
         foreach($rows as $row) {
             $productId = $row['product_id'];
@@ -96,7 +96,7 @@ class ProductManagement implements \Mash2\Cobby\Api\ProductManagementInterface
             $changed = false;
 
             if (!empty($sku)) {
-                $product = $factory->load($productId);
+                $product = $productModel->load($productId);
 
                 if ($product->getSku() != null && $product->getSku() !== $sku) {
                     $product->setSku($sku);
