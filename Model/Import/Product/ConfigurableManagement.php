@@ -63,13 +63,6 @@ class ConfigurableManagement extends AbstractManagement implements \Mash2\Cobby\
             if (!$this->isAttributeSuper($attributeCode)) { // check attribute superity
                 return false;
             }
-
-            foreach ($attribute['options'] as $option) {
-                $optionKey = strtolower($option['option_id']);
-                if (!isset($this->superAttributes[$attributeCode]['options'][$optionKey])) {
-                    return false;
-                }
-            }
         }
 
         $associatedIds = $productSuperData['associated_ids'];
@@ -198,22 +191,11 @@ class ConfigurableManagement extends AbstractManagement implements \Mash2\Cobby\
                 $attrCode = $attribute['code'];
                 $attrId = $attribute['attribute_id'];
                 $labels = $attribute['labels'];
-                $options = $attribute['options'];
 
                 $importProductData['attributes'][$productId][$attrId] = array(
                     'product_super_attribute_id' => $productSuperAttrId, 'position' => $position
                 );
                 $position++;
-
-                foreach ($options as $option) {
-                    $importProductData['pricing'][] = array(
-                        'product_super_attribute_id' => $productSuperAttrId,
-                        'value_index'   => $option['option_id'],
-                        'is_percent'    => $option['is_percent'] == true,
-                        'pricing_value' => (float) $option['price'],
-                        'website_id'    => $option['website_id']
-                    );
-                }
 
                 foreach ($labels as $labelData) {
                     $importProductData['labels'][] = array(
@@ -250,7 +232,6 @@ class ConfigurableManagement extends AbstractManagement implements \Mash2\Cobby\
     {
         $mainTable       = $this->resourceModel->getTableName('catalog_product_super_attribute');
         $labelTable      = $this->resourceModel->getTableName('catalog_product_super_attribute_label');
-        $priceTable      = $this->resourceModel->getTableName('catalog_product_super_attribute_pricing');
         $linkTable       = $this->resourceModel->getTableName('catalog_product_super_link');
         $relationTable   = $this->resourceModel->getTableName('catalog_product_relation');
 
@@ -276,14 +257,6 @@ class ConfigurableManagement extends AbstractManagement implements \Mash2\Cobby\
 
         if ($importProductData['labels']) {
             $this->connection->insertOnDuplicate($labelTable, $importProductData['labels']);
-        }
-
-        if ($importProductData['pricing']) {
-            $this->connection->insertOnDuplicate(
-                $priceTable,
-                $importProductData['pricing'],
-                array('is_percent', 'pricing_value')
-            );
         }
 
         if ($importProductData['super_link']) {
