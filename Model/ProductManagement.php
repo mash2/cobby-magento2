@@ -155,10 +155,8 @@ class ProductManagement implements \Mash2\Cobby\Api\ProductManagementInterface
 
                     $item['removed'] = $websites['remove'];
                 }
-
+                $result[] = $item;
             }
-
-            $result[] = $item;
         }
 
         $this->product->updateHash($productIds);
