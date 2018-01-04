@@ -10,7 +10,6 @@ namespace Mash2\Cobby\Model\Plugin\Catalog;
 
 use Magento\Eav\Model\Entity\Attribute\OptionManagement;
 use Magento\Eav\Model\Config;
-use Magento\Catalog\Model\Product;
 use Magento\Swatches\Helper\Data as SwatchHelper;
 use Magento\Eav\Api\Data\AttributeOptionInterface;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\CollectionFactory as OptionCollection;
@@ -67,8 +66,7 @@ class AddSwatchDataToAddOption
      */
     public function beforeAdd(OptionManagement $subject, $entityType, $attributeCode, $option)
     {
-
-        $attribute = $this->eavConfig->getAttribute(Product::ENTITY, $attributeCode);
+        $attribute = $this->eavConfig->getAttribute(\Magento\Catalog\Model\Product::ENTITY, $attributeCode);
 
         $isSwatch = false;
         if ($this->swatchHelper->isVisualSwatch($attribute)) {
