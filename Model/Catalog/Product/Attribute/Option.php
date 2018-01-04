@@ -233,6 +233,8 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
 
             if(isset($row['option_id']) && (int)$row['option_id']) {
                 $option->setValue($row['option_id']);
+            } else {
+                $option->setValue('');
             }
 
             $option->setStoreLabels($optionLabels);
