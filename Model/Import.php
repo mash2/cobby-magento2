@@ -206,7 +206,7 @@ class Import implements \Mash2\Cobby\Api\ImportInterface
     {
         $rows = $this->jsonHelper->jsonDecode($jsonData);
         $result = $this->importProductUrl->import($rows);
-        return true;
+        return $result;
     }
 
     /**

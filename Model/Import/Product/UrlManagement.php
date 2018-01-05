@@ -1,6 +1,7 @@
 <?php
 namespace Mash2\Cobby\Model\Import\Product;
 
+use Braintree\Exception;
 use Magento\Catalog\Model\Category;
 use Magento\Catalog\Model\Product\Visibility;
 use Magento\UrlRewrite\Service\V1\Data\UrlRewrite;
@@ -9,12 +10,13 @@ use Magento\UrlRewrite\Model\UrlFinderInterface;
 use Magento\Store\Model\Store;
 use Magento\UrlRewrite\Model\UrlPersistInterface;
 use Magento\UrlRewrite\Service\V1\Data\UrlRewriteFactory;
+use Magento\CatalogImportExport\Model\Import\Product\RowValidatorInterface as RowValidator;
+use Magento\UrlRewrite\Model\Exception\UrlAlreadyExistsException as UrlAlreadyExistsException;
 
 
 class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\ImportProductUrlManagementInterface
 {
 
-    const ERROR_DUPLICATE_URL_KEY = 'duplicatedUrlKey';
     /**
      * Url key attribute code
      */
@@ -110,6 +112,7 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
      * constructor.
      * @param \Magento\Framework\App\ResourceConnection $resourceModel
      * @param \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory
+     * @param \Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator $productUrlPathGenerator
      * @param \Magento\Framework\Event\ManagerInterface $eventManager
      * @param \Magento\ImportExport\Model\ResourceModel\Helper $resourceHelper
      * @param \Mash2\Cobby\Helper\Settings $settings
@@ -117,6 +120,11 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
      * @param UrlFinderInterface $urlFinder
      * @param \Magento\CatalogImportExport\Model\Import\Proxy\Product\ResourceModelFactory $resourceFactory
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param UrlPersistInterface $urlPersist
+     * @param \Magento\Catalog\Model\ProductFactory $catalogProductFactory
+     * @param UrlRewriteFactory $urlRewriteFactory
+     * @param \Magento\CatalogImportExport\Model\Import\Product\CategoryProcessor $categoryProcessor
+     * @param \Mash2\Cobby\Model\Product $product
      */
     public function __construct(
         \Magento\Framework\App\ResourceConnection $resourceModel,
@@ -191,13 +199,38 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
         $this->touchProducts($changedProductIds);
 
         $productUrls = $this->generateUrls();
-        if ($productUrls) {
-            $this->urlPersist->replace($productUrls);
+
+        foreach ($changedProductIds as $productId) {
+            $filteredProductUrls = array_filter($productUrls, function($k) use($productId){
+                return $k->getEntityId() == $productId;
+            });
+
+            if ($filteredProductUrls) {
+                $defaultStoreUrls = array_filter($filteredProductUrls, function($k){
+                    return $k->getMetadata() == null;
+                });
+
+                $urls = array();
+                $error_code = null;
+
+                foreach ($defaultStoreUrls as $storeUrl){
+                    $urls[] = array(
+                        "store_id" => $storeUrl->getStoreId(),
+
+                        "url_key" => $storeUrl->getRequestPath());
+                }
+                try {
+                    $this->urlPersist->replace($filteredProductUrls);
+                } catch (UrlAlreadyExistsException $e) {
+                    $error_code = RowValidator::ERROR_DUPLICATE_URL_KEY;
+                }
+
+                $result[] = array("product_id" => $productId, "urls" => $urls, "error_code" => $error_code);
+            }
         }
 
         $this->eventManager->dispatch('cobby_import_product_url_import_after', array( 'products' => $changedProductIds ));
 
-        $result = $attributesData;
         return $result;
     }
 
