@@ -38,11 +38,6 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
     private $registry;
 
     /**
-     * @var \Magento\Catalog\Api\ProductAttributeOptionManagementInterface
-     */
-    private $productAttributeOptionManagement;
-
-    /**
      * @var \Magento\Eav\Model\Entity\Attribute\OptionFactory
      */
     private $attrOptionFactory;
@@ -58,37 +53,42 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
     protected $eventManager;
 
     /**
+     * @var \Magento\Eav\Api\AttributeOptionManagementInterface
+     */
+    protected $eavOptionManagement;
+
+    /**
      * Import constructor.
      * @param \Magento\Framework\Json\Helper\Data $jsonHelper
      * @param \Magento\Catalog\Model\ResourceModel\Product $productResource
      * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Catalog\Api\ProductAttributeOptionManagementInterface $productAttributeOptionManagement
      * @param \Magento\Eav\Model\Entity\Attribute\OptionFactory $attrOptionFactory
      * @param \Magento\Eav\Model\Entity\Attribute\OptionLabelFactory $attrOptionLabelFactory
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\CollectionFactory $optionCollectionFactory
      * @param \Magento\Framework\Event\ManagerInterface $eventManager
+     * @param \Magento\Eav\Api\AttributeOptionManagementInterface $eavOptionManagement
      */
     public function __construct(
         \Magento\Framework\Json\Helper\Data $jsonHelper,
         \Magento\Catalog\Model\ResourceModel\Product $productResource,
         \Magento\Framework\Registry $registry,
-        \Magento\Catalog\Api\ProductAttributeOptionManagementInterface $productAttributeOptionManagement,
         \Magento\Eav\Model\Entity\Attribute\OptionFactory $attrOptionFactory,
         \Magento\Eav\Model\Entity\Attribute\OptionLabelFactory $attrOptionLabelFactory,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\CollectionFactory $optionCollectionFactory,
-        \Magento\Framework\Event\ManagerInterface $eventManager
+        \Magento\Framework\Event\ManagerInterface $eventManager,
+        \Magento\Eav\Api\AttributeOptionManagementInterface $eavOptionManagement
     ) {
         $this->jsonHelper = $jsonHelper;
         $this->productResource = $productResource;
         $this->registry = $registry;
-        $this->productAttributeOptionManagement = $productAttributeOptionManagement;
         $this->attrOptionFactory = $attrOptionFactory;
         $this->attrOptionLabelFactory = $attrOptionLabelFactory;
         $this->storeManager = $storeManager;
         $this->optionCollectionFactory = $optionCollectionFactory;
         $this->eventManager = $eventManager;
+        $this->eavOptionManagement = $eavOptionManagement;
     }
 
     public function export($attributeId){
@@ -239,7 +239,11 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
 
             $option->setStoreLabels($optionLabels);
             $option->setLabel($adminLabel);
-            $this->productAttributeOptionManagement->add($attributeCode, $option);
+            $this->eavOptionManagement->add(
+                \Magento\Catalog\Api\Data\ProductAttributeInterface::ENTITY_TYPE_CODE,
+                $attributeCode,
+                $option
+            );
         }
     }
 }
