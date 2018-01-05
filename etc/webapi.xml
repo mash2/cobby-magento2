@@ -242,8 +242,4 @@
             <resource ref="Mash2_Cobby::cobby"/>
         </resources>
     </route>
-
-    <route url="/cobby/import/swatches" method="POST">
-        <service class="Mash2\Cobby\Plugin\Catalog\AddSwatchDataToOption" method=""/>
-    </route>
 </routes>
