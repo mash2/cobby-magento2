@@ -58,6 +58,11 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
     protected $eavOptionManagement;
 
     /**
+     * @var \Magento\Swatches\Helper\Data
+     */
+    protected $swatchHelper;
+
+    /**
      * Import constructor.
      * @param \Magento\Framework\Json\Helper\Data $jsonHelper
      * @param \Magento\Catalog\Model\ResourceModel\Product $productResource
@@ -78,6 +83,7 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\CollectionFactory $optionCollectionFactory,
         \Magento\Framework\Event\ManagerInterface $eventManager,
+        \Magento\Swatches\Helper\Data $swatchHelper,
         \Magento\Eav\Api\AttributeOptionManagementInterface $eavOptionManagement
     ) {
         $this->jsonHelper = $jsonHelper;
@@ -89,6 +95,7 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
         $this->optionCollectionFactory = $optionCollectionFactory;
         $this->eventManager = $eventManager;
         $this->eavOptionManagement = $eavOptionManagement;
+        $this->swatchHelper = $swatchHelper;
     }
 
     public function export($attributeId){
@@ -200,6 +207,9 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
                     if (empty($options) || (int)$requestedOption['option_id']) {
                         $this->_saveAttributeOptions($attribute, array($requestedOption));
                         $options = $this->getOptions($attributeId, $label);
+                        if ($this->swatchHelper->isTextSwatch($attribute)) {
+                            $this->saveSwatchParams($attribute, $options);
+                        }
                         $result[] = ['attribute_id' => $attributeId, 'options' => $options];
                     } else {
                         $result[] = ['attribute_id' => $attributeId, 'options' => $options,
@@ -210,6 +220,23 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
         }
 
         return $result;
+    }
+
+    /**
+     * Save swatch text
+     *
+     * @param $attribute
+     * @param array $options
+     * @return void
+     */
+    protected function saveSwatchParams($attribute, $options)
+    {
+        foreach ($options as $option) {
+            if($option['store_id'] == 0) {
+                $attribute->setData('swatchtext', array('value'=> array( $option['value'] => array($option['label']))));
+                $attribute->save();
+            }
+        }
     }
 
     private function _saveAttributeOptions($attribute, $data)
