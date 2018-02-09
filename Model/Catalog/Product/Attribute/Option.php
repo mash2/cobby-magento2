@@ -208,7 +208,7 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
                         $this->_saveAttributeOptions($attribute, array($requestedOption));
                         $options = $this->getOptions($attributeId, $label);
                         if ($this->swatchHelper->isTextSwatch($attribute)) {
-                            $this->saveSwatchParams($attribute, $options);
+                            $this->saveSwatchParams($attributeId, $options);
                         }
                         $result[] = ['attribute_id' => $attributeId, 'options' => $options];
                     } else {
@@ -225,14 +225,15 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
     /**
      * Save swatch text
      *
-     * @param $attribute
+     * @param int $attributeId
      * @param array $options
      * @return void
      */
-    protected function saveSwatchParams($attribute, $options)
+    protected function saveSwatchParams($attributeId, $options)
     {
         foreach ($options as $option) {
             if($option['store_id'] == 0) {
+                $attribute = $this->productResource->getAttribute($attributeId);
                 $attribute->setData('swatchtext', array('value'=> array( $option['value'] => array($option['label']))));
                 $attribute->save();
             }
