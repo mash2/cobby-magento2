@@ -515,11 +515,16 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                 foreach ($storeAttributeData as $key => $value)
                 {
                     $file = null;
-                    if(!empty($value)){
+                    if(!empty($value) && isset($images[$value])){
                         $file = $value == 'no_selection' ? 'no_selection' : $images[$value];
                     }
 
                     $attribute = $this->resource->getAttribute($key);
+
+                    if (!$attribute) {
+                        continue;
+                    }
+
                     $attrTable = $attribute->getBackend()->getTable();
                     $attrId = $attribute->getId();
                     $attributesData[$attrTable][$productId][$attrId][$storeId] = $file;
