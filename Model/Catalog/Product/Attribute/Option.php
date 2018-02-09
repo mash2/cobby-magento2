@@ -7,7 +7,6 @@ namespace Mash2\Cobby\Model\Catalog\Product\Attribute;
  */
 class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
 {
-    const ERROR_NOT_EXISTS = 'attribute_not_exists';
     const ERROR_OPTION_ALREADY_EXISTS = 'option_already_exists';
 
     /**
@@ -99,17 +98,26 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
     }
 
     public function export($attributeId){
+        $result = array();
+        $attribute = $this->productResource->getAttribute($attributeId);
+
+        if (!$attribute) {
+            throw new \Magento\Framework\Exception\NoSuchEntityException(__('Requested attribute doesn\'t exist'));
+        }
+
         $options = $this->getOptions($attributeId);
 
         $transportObject = new \Magento\Framework\DataObject();
         $transportObject->setData($options);
 
-        $attribute = $this->productResource->getAttribute($attributeId);
-
         $this->eventManager->dispatch('cobby_catalog_product_attribute_option_export_after',
             array('attribute' => $attribute, 'transport' => $transportObject));
 
-        return $transportObject->getData();
+        $result[] = array(
+            'attribute_id' => $attributeId,
+            'options' => $transportObject->getData());
+
+        return $result;
     }
 
     public function getOptions($attributeId, $filter = null)
@@ -197,7 +205,7 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
             if (!$attribute) {
                 $result[] = array('attribute_id' => $attributeId,
                     'options' => null,
-                    'error_code' => self::ERROR_NOT_EXISTS);
+                    'error_code' => \Mash2\Cobby\Model\Catalog\Product\Attribute::ERROR_ATTRIBUTE_NOT_EXISTS);
             }
             else {
                 foreach ($row['options'] as $requestedOption) {

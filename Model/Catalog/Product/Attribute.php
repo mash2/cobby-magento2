@@ -7,6 +7,8 @@ namespace Mash2\Cobby\Model\Catalog\Product;
  */
 class Attribute implements \Mash2\Cobby\Api\CatalogProductAttributeInterface
 {
+    const ERROR_ATTRIBUTE_NOT_EXISTS = 'attribute_not_exists';
+
     /**
      * @var \Magento\Catalog\Model\ResourceModel\Product\Attribute\Collection
      */
@@ -24,9 +26,10 @@ class Attribute implements \Mash2\Cobby\Api\CatalogProductAttributeInterface
 
     /**
      * Api constructor.
+     *
      * @param \Magento\Catalog\Model\ResourceModel\Product\Attribute\Collection $attributeCollection
-     * @param \Magento\Catalog\Model\ResourceModel\Product $productResource
-     * @param \Magento\Framework\Event\ManagerInterface $eventManager
+     * @param \Magento\Catalog\Model\ResourceModel\Product                      $productResource
+     * @param \Magento\Framework\Event\ManagerInterface                         $eventManager
      */
     public function __construct(
         \Magento\Catalog\Model\ResourceModel\Product\Attribute\Collection $attributeCollection,
@@ -48,7 +51,11 @@ class Attribute implements \Mash2\Cobby\Api\CatalogProductAttributeInterface
         if ($attributeId){
             $attribute = $this->productResource->getAttribute($attributeId);
 
-            $result[] = $this->getAttribute($attribute);
+            if (!$attribute) {
+                throw new \Magento\Framework\Exception\NoSuchEntityException(__('Requested attribute doesn\'t exist'));
+            }else  {
+                $result[] = $this->getAttribute($attribute);
+            }
         }
 
         if ($attributeSetId){
@@ -56,16 +63,20 @@ class Attribute implements \Mash2\Cobby\Api\CatalogProductAttributeInterface
                 ->setAttributeSetFilter($attributeSetId)
                 ->load();
 
-            foreach ($attributes as $attribute) {
-                $data = $this->getAttribute($attribute);
+            if (!$attributes->getItems()) {
+                throw new \Magento\Framework\Exception\NoSuchEntityException(__('Requested attribute_set doesn\'t exist'));
+            } else {
+                foreach ($attributes as $attribute) {
+                    $data = $this->getAttribute($attribute);
 
-                $transportObject = new \Magento\Framework\DataObject();
-                $transportObject->setData($data);
+                    $transportObject = new \Magento\Framework\DataObject();
+                    $transportObject->setData($data);
 
-                $this->eventManager->dispatch('cobby_catalog_attribute_export_after', array(
-                    'attribute' => $attribute, 'transport' => $transportObject));
+                    $this->eventManager->dispatch('cobby_catalog_attribute_export_after', array(
+                        'attribute' => $attribute, 'transport' => $transportObject));
 
-                $result[] = $transportObject->getData();
+                    $result[] = $transportObject->getData();
+                }
             }
         }
 
