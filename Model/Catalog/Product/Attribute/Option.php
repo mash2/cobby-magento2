@@ -98,7 +98,6 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
     }
 
     public function export($attributeId){
-        $result = array();
         $attribute = $this->productResource->getAttribute($attributeId);
 
         if (!$attribute) {
@@ -113,11 +112,7 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
         $this->eventManager->dispatch('cobby_catalog_product_attribute_option_export_after',
             array('attribute' => $attribute, 'transport' => $transportObject));
 
-        $result[] = array(
-            'attribute_id' => $attributeId,
-            'options' => $transportObject->getData());
-
-        return $result;
+        return $transportObject->getData();
     }
 
     public function getOptions($attributeId, $filter = null)
