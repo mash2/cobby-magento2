@@ -771,6 +771,9 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
 
         $filterChangedProducts = $this->filterChangedProducts($filterProductParams);
 
+        $this->eventManager->dispatch('cobby_catalog_product_export_before',
+            array('products' => $filterProductParams));
+
         $unchangedProducts = array_diff_key($filterProductParams, $filterChangedProducts);
 
         foreach ($unchangedProducts as $productId => $hash) {

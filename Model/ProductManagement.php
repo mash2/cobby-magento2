@@ -39,12 +39,18 @@ class ProductManagement implements \Mash2\Cobby\Api\ProductManagementInterface
     private $product;
 
     /**
+     * @var \Magento\Framework\Event\ManagerInterface
+     */
+    protected $eventManager;
+
+    /**
      * ProductManagement constructor.
      * @param \Magento\Framework\Json\Helper\Data $jsonHelper
      * @param \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory
      * @param \Magento\Catalog\Model\ProductFactory $productFactory
      * @param \Magento\Framework\Registry $registry
      * @param \Magento\Framework\App\ResourceConnection $resourceModel
+     * @param \Magento\Framework\Event\ManagerInterface $eventManager
      * @param Product $product
      */
     public function __construct(
@@ -53,6 +59,7 @@ class ProductManagement implements \Mash2\Cobby\Api\ProductManagementInterface
         \Magento\Catalog\Model\ProductFactory $productFactory,
         \Magento\Framework\Registry $registry,
         \Magento\Framework\App\ResourceConnection $resourceModel,
+        \Magento\Framework\Event\ManagerInterface $eventManager,
         \Mash2\Cobby\Model\Product $product
     ) {
         $this->jsonHelper = $jsonHelper;
@@ -60,11 +67,14 @@ class ProductManagement implements \Mash2\Cobby\Api\ProductManagementInterface
         $this->productFactory = $productFactory;
         $this->registry = $registry;
         $this->resourceModel = $resourceModel;
+        $this->eventManager = $eventManager;
         $this->product = $product;
     }
 
     public function getList($pageNum, $pageSize)
     {
+        $this->eventManager->dispatch('cobby_catalog_product_export_ids_before');
+
         /** @var $collection \Magento\Catalog\Model\ResourceModel\Product\Collection */
         $collection = $this->productCollectionFactory->create();
 
@@ -74,6 +84,8 @@ class ProductManagement implements \Mash2\Cobby\Api\ProductManagementInterface
             ->load();
 
         $result =  $items->toArray(array('entity_id', 'sku', 'type_id'));
+
+        $this->eventManager->dispatch('cobby_catalog_product_export_ids_after');
 
         return $result;
     }
