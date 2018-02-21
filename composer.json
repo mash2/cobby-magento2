@@ -3,7 +3,7 @@
 	"description" : "This extension for Magento 2 provides a direct integration of the cobby management methods to your Magento 2 shop.",
 	"version" : "1.44.1",
 	"type" : "magento2-module",
-	"license" : "Use of this software requires acceptance of the Evaluation License Agreement. See LICENSE file.",
+	"license" : "OSL-3.0",
 	"autoload" : {
 		"files" : [
 			"registration.php"
