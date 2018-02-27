@@ -3,6 +3,10 @@ namespace Mash2\Cobby\Model\Import\Product;
 
 use Magento\Framework\App\Filesystem\DirectoryList;
 
+/**
+ * Class ImageManagement
+ * @package Mash2\Cobby\Model\Import\Product
+ */
 class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\ImportProductImageManagementInterface
 {
     /**
@@ -63,6 +67,13 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
      */
     protected $productEntityTableName;
 
+    protected $productCollectionFactory;
+
+    /**
+     * @var \Magento\Catalog\Model\ResourceModel\Product\Attribute\CollectionFactory
+     */
+    private $attributeCollectionFactory;
+
     /**
      * constructor.
      * @param \Magento\Framework\App\ResourceConnection $resourceModel
@@ -83,7 +94,8 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         \Magento\CatalogImportExport\Model\Import\UploaderFactory $uploaderFactory,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\CatalogImportExport\Model\Import\Proxy\Product\ResourceModelFactory $resourceFactory,
-        \Mash2\Cobby\Model\Product $product
+        \Mash2\Cobby\Model\Product $product,
+        \Magento\Catalog\Model\ResourceModel\Product\Attribute\CollectionFactory $attributeCollectionFactory
     ) {
         parent::__construct($resourceModel, $productCollectionFactory, $eventManager, $resourceHelper, $product);
         $this->settings = $settings;
@@ -93,6 +105,20 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         $this->uploaderFactory = $uploaderFactory;
         $this->initUploader();
         $this->initMediaGalleryResources();
+        $this->productCollectionFactory = $productCollectionFactory;
+        $this->attributeCollectionFactory = $attributeCollectionFactory;
+    }
+
+    protected function getStoreIds()
+    {
+        $result = array();
+        foreach ($this->storeManager->getStores(true) as $store) {
+            $result[] = $store->getId();
+        }
+        ksort($result);
+        // to ensure that 'admin' store (ID is zero) goes first
+
+        return $result;
     }
 
     /**
@@ -148,6 +174,13 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
 
         $this->eventManager->dispatch('cobby_import_product_media_import_after', array(
             'products' => $productIds ));
+
+        $mediaGalleries = $this->getMediaGallery($productIds, $this->getStoreIds());
+        $productAttributes = $this->getAttributes($productIds);
+
+        foreach ($mediaGalleries as $prodId => $media) {
+            $result[] = array('product_id' => $prodId,'_image_gallery' => $media, '_attributes' => $productAttributes);
+        }
 
         return $result;
     }
@@ -582,5 +615,90 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         );
 
         return $linkId;
+    }
+
+    protected function getMediaGallery(array $productIds, $storeIds)
+    {
+        $result = array();
+
+        $productEntityLinkField = $this->getProductEntityLinkField();
+
+        $select = $this->connection->select()
+            ->from(
+                array('mgv' => $this->resourceModel->getTableName('catalog_product_entity_media_gallery_value')),
+                array('mgv.' . $productEntityLinkField, 'mgv.store_id', 'mgv.label', 'mgv.position', 'mgv.disabled')
+            )->joinLeft(
+                array('mg' => $this->resourceModel->getTableName('catalog_product_entity_media_gallery')),
+                '(mg.value_id = mgv.value_id)',
+                array('mg.attribute_id', 'filename' => 'mg.value', 'mg.media_type')
+            )
+            ->where('mgv.' . $productEntityLinkField . ' IN (?) ', $productIds);
+
+        $stmt = $this->connection->query($select);
+        while ($mediaRow = $stmt->fetch()) {
+            $productId = $mediaRow[$productEntityLinkField];
+            $storeId = isset($mediaRow['store_id']) ? (int)$mediaRow['store_id'] : 0;
+            if (in_array($storeId, $storeIds)) {
+                $result[$productId][] = array(
+                    'store_id' => $mediaRow['store_id'],
+                    'attribute_id' => $mediaRow['attribute_id'],
+                    'filename' => $mediaRow['filename'],
+                    'label' => $mediaRow['label'],
+                    'position' => $mediaRow['position'],
+                    'disabled' => $mediaRow['disabled'],
+                    'media_type' => $mediaRow['media_type']
+                );
+            }
+        }
+
+        return $result;
+    }
+
+    private function getAttributes($productIds)
+    {
+        $result = array();
+        $exportAttrCodes = $this->getMediaImageCodes();
+
+        foreach ($this->getStoreIds() as $storeId => $storeCode) {
+            $collection = $this->productCollectionFactory->create();
+
+            foreach ($exportAttrCodes as $attrCode) {
+                $collection->addAttributeToSelect($attrCode);
+            }
+
+            $collection->setStoreId($storeId);
+
+            $collection->addAttributeToFilter('entity_id', array('in' => $productIds));
+
+            foreach ($collection as $productId => $product) {
+                $attributes = array('store_id' => $storeId);
+                foreach ($exportAttrCodes as &$attrCode) { // go through all valid attribute codes
+                    $attrValue = $product->getData($attrCode);
+
+                    if (!is_array($attrValue)) {
+                        $attributes[$attrCode] = $attrValue;
+                    }
+                }
+
+                $result[] = $attributes;
+            }
+
+            $collection->clear();
+        }
+
+        return $result;
+    }
+
+    private function getMediaImageCodes()
+    {
+        $result = array();
+        $attributeCollection = $this->attributeCollectionFactory->create();
+        $attributeCollection->setFrontendInputTypeFilter('media_image');
+
+        foreach ($attributeCollection as $attributeCode) {
+            $result[] = $attributeCode->getAttributeCode();
+        }
+
+        return $result;
     }
 }
