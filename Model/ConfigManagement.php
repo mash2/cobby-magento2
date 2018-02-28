@@ -4,6 +4,8 @@ namespace Mash2\Cobby\Model;
 
 class ConfigManagement implements \Mash2\Cobby\Api\ConfigManagementInterface
 {
+    const EE = 'Enterprise';
+
     /**
      * config paths use in cobby
      *
@@ -38,7 +40,7 @@ class ConfigManagement implements \Mash2\Cobby\Api\ConfigManagementInterface
     private $backendUrl;
 
     /**
-     * @var \Magento\Framework\App\ProductMetadata
+     * @var \Magento\Framework\App\ProductMetadataInterface
      */
     private $productMetadata;
 
@@ -46,24 +48,25 @@ class ConfigManagement implements \Mash2\Cobby\Api\ConfigManagementInterface
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Backend\Model\UrlInterface $backendUrl
-     * @param \Magento\Framework\App\ProductMetadata $productMetadata
+     * @param \Magento\Framework\App\ProductMetadataInterface $productMetadata
      */
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Backend\Model\UrlInterface $backendUrl,
-        \Magento\Framework\App\ProductMetadata $productMetadata
+        \Magento\Framework\App\ProductMetadataInterface $productMetadata
+
     ) {
-        $this->scopeConfig = $scopeConfig;
-        $this->storeManager = $storeManager;
-        $this->backendUrl = $backendUrl;
-        $this->productMetadata = $productMetadata;
+        $this->scopeConfig      = $scopeConfig;
+        $this->storeManager     = $storeManager;
+        $this->backendUrl       = $backendUrl;
+        $this->productMetadata  = $productMetadata;
     }
 
     public function getList()
     {
         $result = array();
-        $isEE = $this->productMetadata->getEdition() != \Magento\Framework\App\ProductMetadata::EDITION_NAME;
+        $isEE = $this->productMetadata->getEdition() == self::EE;
         $magentoVersion = $this->productMetadata->getVersion();
         $adminUrl = $this->backendUrl->turnOffSecretKey()->getUrl('adminhtml');
 
