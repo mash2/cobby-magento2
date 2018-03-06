@@ -216,19 +216,11 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                 $storedMediaGallery[$prodId] = array();
 			}
 
-            $errors = array();
-            foreach ($value['errors'] as $image => $errorCode) {
-                $errors[] = array(
-                    'image' => $image,
-                    'error_code' => $errorCode
-                );
-            }
-
             $result[] = array(
                 'product_id'                                            => $prodId,
                 \Mash2\Cobby\Model\Export\Product::COL_IMAGE_GALLERY    => $storedMediaGallery[$prodId],
                 \Mash2\Cobby\Model\Export\Product::COL_ATTRIBUTES       => $productAttributes,
-                'errors'                                                => $errors
+                'errors'                                                => $value['errors']
             );
 		}
 		
@@ -404,6 +396,7 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
             {
                 $downloadedImage = false;
                 $externalImage   = false;
+                $importError     = false;
 
                 $image = $imageData['image'];
 
@@ -418,8 +411,8 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                     try {
                         $this->imageAdapter->validateUploadFile($filename);
                         $this->fileHelper->cp($filename, $destPath);
-                    } catch (Exception $e) {
-                        $mediaGallery[$productId]['errors'][$imageData['image']] = self::ERROR_FILE_NOT_FOUND;
+                    } catch (\Exception $e) {
+                        $importError = true;
                     }
 
                 }else  if(!empty($imageData['upload'])) {
@@ -439,16 +432,20 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                     $imageData['file'] = $uploadedGalleryFiles[$imageData['name']];
 
                     $filename = $this->fileUploader->getTmpDir() . '/' . $imageData['name'];
-
                     try {
                         // validation of image file
                         $this->imageAdapter->validateUploadFile($filename);
                     } catch (\Exception $e) {
                         if ($externalImage && !$downloadedImage) {
-                            $mediaGallery[$productId]['errors'][$imageData['image']] = self::ERROR_FILE_NOT_DOWNLOADED;
-                        }
-                        else {
-                            $mediaGallery[$productId]['errors'][$imageData['image']] = self::ERROR_FILE_NOT_FOUND;
+                            $mediaGallery[$productId]['errors'][] = array(
+                                'image' => $imageData['image'],
+                                'file' => $imageData['upload'],
+                                'error_code' => self::ERROR_FILE_NOT_DOWNLOADED);
+                        } else if ($importError){
+                            $mediaGallery[$productId]['errors'][] = array(
+                                'image' => $imageData['image'],
+                                'file' => $imageData['import'],
+                                'error_code' => self::ERROR_FILE_NOT_FOUND);
                         }
                     }
                 }
