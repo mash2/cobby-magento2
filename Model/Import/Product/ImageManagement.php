@@ -70,13 +70,6 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
      */
     protected $productEntityTableName;
 
-    protected $productCollectionFactory;
-
-    /**
-     * @var \Magento\Catalog\Model\ResourceModel\Product\Attribute\CollectionFactory
-     */
-    private $attributeCollectionFactory;
-
     /**
      * @var \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory
      */
