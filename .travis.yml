@@ -8,15 +8,27 @@ php:
   - 7.0
 
 env:
-  - magento=2.1.5
-  - magento=2.1.6
-  - magento=2.1.7
-  - magento=2.1.8
-  - magento=2.1.9
-  - magento=2.2.0
-  - magento=2.2.1
-  - magento=2.2.2
-  - magento=2.2.3
+  matrix:
+    - magento=2.1.5
+    - magento=2.1.6
+    - magento=2.1.7
+    - magento=2.1.8
+    - magento=2.1.9
+    - magento=2.2.0
+    - magento=2.2.1
+    - magento=2.2.2
+    - magento=2.2.3
+
+matrix:
+  exclude:
+    - php: 5.6
+      env: magento=2.2.0
+    - php: 5.6
+      env: magento=2.2.1
+    - php: 5.6
+      env: magento=2.2.2
+    - php: 5.6
+      env: magento=2.2.3
 
 cache:
   directories:
