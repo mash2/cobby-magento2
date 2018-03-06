@@ -12,7 +12,10 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
     /**
      * Media gallery attribute code.
      */
-    const MEDIA_GALLERY_ATTRIBUTE_CODE = 'media_gallery';
+    const MEDIA_GALLERY_ATTRIBUTE_CODE  = 'media_gallery';
+    const MEDIA_IMPORT_PATH             = '/pub/media/import';
+    const ERROR_FILE_NOT_DOWNLOADED     = 2;
+    const ERROR_FILE_NOT_FOUND          = 1;
 
     private $uploadMediaFiles = array();
     
@@ -75,6 +78,38 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
     private $attributeCollectionFactory;
 
     /**
+     * @var \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory
+     */
+    protected $productCollectionFactory;
+
+    /**
+     * @var \Magento\Catalog\Model\ResourceModel\Product\Attribute\CollectionFactory
+     */
+    private $attributeCollectionFactory;
+
+    /**
+     * @var \Magento\Framework\Filesystem\Io\File
+     */
+    protected $fileHelper;
+
+    /**
+     * @var \Magento\Catalog\Helper\Image
+     */
+    protected $imageHelper;
+
+    /**
+     * @var \Magento\Framework\Image\Factory
+     */
+    protected $imageAdapter;
+
+    /**
+     * absolute path of import directory
+     *
+     * @var string
+     */
+    protected $importDir;
+
+    /**
      * constructor.
      * @param \Magento\Framework\App\ResourceConnection $resourceModel
      * @param \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory
@@ -82,7 +117,14 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
      * @param \Magento\ImportExport\Model\ResourceModel\Helper $resourceHelper
      * @param \Mash2\Cobby\Helper\Settings $settings
      * @param \Magento\Framework\Filesystem $filesystem
+     * @param \Magento\CatalogImportExport\Model\Import\UploaderFactory $uploaderFactory
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \Magento\CatalogImportExport\Model\Import\Proxy\Product\ResourceModelFactory $resourceFactory
+     * @param \Mash2\Cobby\Model\Product $product
+     * @param \Magento\Catalog\Model\ResourceModel\Product\Attribute\CollectionFactory $attributeCollectionFactory
+     * @param \Magento\Framework\Filesystem\Io\File $fileHelper
+     * @param \Magento\Catalog\Helper\Image $imageHelper
+     * @param \Magento\Framework\Image\AdapterFactory $imageAdapterFactory
      */
     public function __construct(
         \Magento\Framework\App\ResourceConnection $resourceModel,
@@ -95,21 +137,27 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\CatalogImportExport\Model\Import\Proxy\Product\ResourceModelFactory $resourceFactory,
         \Mash2\Cobby\Model\Product $product,
-        \Magento\Catalog\Model\ResourceModel\Product\Attribute\CollectionFactory $attributeCollectionFactory
+        \Magento\Catalog\Model\ResourceModel\Product\Attribute\CollectionFactory $attributeCollectionFactory,
+        \Magento\Framework\Filesystem\Io\File $fileHelper,
+        \Magento\Catalog\Helper\Image $imageHelper,
+        \Magento\Framework\Image\AdapterFactory $imageAdapterFactory
     ) {
         parent::__construct($resourceModel, $productCollectionFactory, $eventManager, $resourceHelper, $product);
-        $this->settings = $settings;
-        $this->mediaDirectory = $filesystem->getDirectoryWrite(DirectoryList::ROOT);
-        $this->storeManager = $storeManager;
-        $this->resource = $resourceFactory->create();
-        $this->uploaderFactory = $uploaderFactory;
-        $this->initUploader();
+        $this->settings                     = $settings;
+        $this->mediaDirectory               = $filesystem->getDirectoryWrite(DirectoryList::ROOT);
+        $this->storeManager                 = $storeManager;
+        $this->resource                     = $resourceFactory->create();
+        $this->uploaderFactory              = $uploaderFactory;
         $this->initMediaGalleryResources();
-        $this->productCollectionFactory = $productCollectionFactory;
-        $this->attributeCollectionFactory = $attributeCollectionFactory;
+        $this->productCollectionFactory     = $productCollectionFactory;
+        $this->attributeCollectionFactory   = $attributeCollectionFactory;
+        $this->fileHelper                   = $fileHelper;
+        $this->imageHelper                  = $imageHelper;
+        $this->imageAdapter                 = $imageAdapterFactory->create();
+        $this->importDir                    = $this->mediaDirectory->getAbsolutePath('pub/media/import');
     }
 
-    protected function getStoreIds()
+    private function getStoreIds()
     {
         $result = array();
         foreach ($this->storeManager->getStores(true) as $store) {
@@ -142,18 +190,15 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
      */
     protected function createMediaImportFolder()
     {
-        if (!$this->mediaDirectory->isExist('import')) {
-            $this->mediaDirectory->create('import');
+        if (!$this->mediaDirectory->isExist(self::MEDIA_IMPORT_PATH)) {
+            $this->mediaDirectory->create(self::MEDIA_IMPORT_PATH);
         }
     }
 
     public function import($rows)
     {
         $result = array();
-
-//        $this->createMediaImportFolder();
-
-//        $this->_getUploader()->setAllowRenameFiles(!$this->settings->getOverwriteImages());
+        $this->initUploader();
 
         $mediaGallery = $this->processRows($rows);
         $productIds = array_keys($mediaGallery);
@@ -165,23 +210,35 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         $this->saveMediaGallery($mediaGallery);
         $this->saveProductImageAttributes($mediaGallery);
 
-        //enable when added errors for images
-//        foreach($mediaGallery as $productId => $value ) {
-//            $result[$productId] = $value['errors'];
-//        }
-
         $this->touchProducts($productIds);
 
         $this->eventManager->dispatch('cobby_import_product_media_import_after', array(
             'products' => $productIds ));
 
-        $mediaGalleries = $this->getMediaGallery($productIds, $this->getStoreIds());
+        $storedMediaGallery = $this->getMediaGallery($productIds, $this->getStoreIds());
         $productAttributes = $this->getAttributes($productIds);
 
-        foreach ($mediaGalleries as $prodId => $media) {
-            $result[] = array('product_id' => $prodId,'_image_gallery' => $media, '_attributes' => $productAttributes);
-        }
+        foreach ($mediaGallery as $prodId => $value) {
+            if (!in_array($prodId, array_keys($storedMediaGallery))){
+                $storedMediaGallery[$prodId] = array();
+			}
 
+            $errors = array();
+            foreach ($value['errors'] as $image => $errorCode) {
+                $errors[] = array(
+                    'image' => $image,
+                    'error_code' => $errorCode
+                );
+            }
+
+            $result[] = array(
+                'product_id'                                            => $prodId,
+                \Mash2\Cobby\Model\Export\Product::COL_IMAGE_GALLERY    => $storedMediaGallery[$prodId],
+                \Mash2\Cobby\Model\Export\Product::COL_ATTRIBUTES       => $productAttributes,
+                'errors'                                                => $errors
+            );
+		}
+		
         return $result;
     }
 
@@ -289,6 +346,8 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
      *
      * @param $url
      * @param $fileName
+     *
+     * @throws \Exception
      */
     protected function _copyExternalImageFile($url, $fileName)
     {
@@ -312,8 +371,12 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                 curl_close($ch);
                 fclose($fileHandle);
                 // @codingStandardsIgnoreEnd
+
+                $this->imageAdapter->validateUploadFile($dir.'/'.$fileName);
+
+                return true;
             } catch (\Exception $e) {
-                throw new \Exception('Download of file ' . $url . ' failed: ' . $e->getMessage());
+                return false;
             }
         }
     }
@@ -323,7 +386,6 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
     {
         $mediaGallery = array();
         $uploadedGalleryFiles = array();
-
         $productIds = array_keys($rows);
         $existingProductIds = $this->loadExistingProductIds($productIds);
         $storeIds = array_keys($this->storeManager->getStores(true));
@@ -347,6 +409,9 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
 
             foreach($images as $imageData)
             {
+                $downloadedImage = false;
+                $externalImage   = false;
+
                 $image = $imageData['image'];
 
                 if(!empty($imageData['import'])) {
@@ -354,20 +419,24 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                         $imageData['name'] = $image;
                     }
 
-                    //only copy if exists in import folder
-                    if (is_file($this->fileUploader->getTmpDir() . '/' . $imageData['import'])) {
-                        // @codingStandardsIgnoreStart
-                        copy($this->fileUploader->getTmpDir() . '/' . $imageData['import'], $this->fileUploader->getTmpDir() . '/'. $imageData['name']);
-                        // @codingStandardsIgnoreEnd
+                    $filename = $this->importDir . '/' . $imageData['import'];
+                    $destPath = $this->importDir . '/' . $imageData['name'];
+
+                    try {
+                        $this->imageAdapter->validateUploadFile($filename);
+                        $this->fileHelper->cp($filename, $destPath);
+                    } catch (Exception $e) {
+                        $mediaGallery[$productId]['errors'][$imageData['image']] = self::ERROR_FILE_NOT_FOUND;
                     }
 
                 }else  if(!empty($imageData['upload'])) {
+                    $externalImage = true;
                     if(empty($imageData['name'])) {
                         // @codingStandardsIgnoreStart
                         $imageData['name'] = basename(parse_url($imageData['upload'], PHP_URL_PATH));
                         // @codingStandardsIgnoreEnd
                     }
-                    $this->_copyExternalImageFile($imageData['upload'], $imageData['name']);
+                    $downloadedImage = $this->_copyExternalImageFile($imageData['upload'], $imageData['name']);
                 }
 
                 if(!empty($imageData['import']) || !empty($imageData['upload'])) {
@@ -375,11 +444,21 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                         $uploadedGalleryFiles[$imageData['name']] = $this->uploadMediaFiles($imageData['name']);
                     }
                     $imageData['file'] = $uploadedGalleryFiles[$imageData['name']];
-                }
 
-//                if($imageData['file'] == '') {
-//                    $mediaGallery[$productId]['errors'][$imageData['image']] = self::ERROR_FILE_NOT_FOUND;
-//                }
+                    $filename = $this->fileUploader->getTmpDir() . '/' . $imageData['name'];
+
+                    try {
+                        // validation of image file
+                        $this->imageAdapter->validateUploadFile($filename);
+                    } catch (\Exception $e) {
+                        if ($externalImage && !$downloadedImage) {
+                            $mediaGallery[$productId]['errors'][$imageData['image']] = self::ERROR_FILE_NOT_DOWNLOADED;
+                        }
+                        else {
+                            $mediaGallery[$productId]['errors'][$imageData['image']] = self::ERROR_FILE_NOT_FOUND;
+                        }
+                    }
+                }
 
                 if(!isset($mediaGallery[$productId]['errors'][$imageData['image']])){
                     $mediaGallery[$productId]['images'][$imageData['image']] = $imageData['file'];
@@ -455,15 +534,21 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         $DS = DIRECTORY_SEPARATOR;
 
 //        if (!empty($this->_parameters[Import::FIELD_NAME_IMG_FILE_DIR])) {
-//            $tmpPath = $this->_parameters[Import::FIELD_NAME_IMG_FILE_DIR];
+//            $importDir = $this->_parameters[Import::FIELD_NAME_IMG_FILE_DIR];
 //        } else {
-            $tmpPath = $dirAddon . $DS . $this->mediaDirectory->getRelativePath('import');
+//            $this->importDir = $dirAddon . $DS . $this->mediaDirectory->getAbsolutePath('import');
 //        }
 
-        if (!$this->fileUploader->setTmpDir($tmpPath)) {
-            throw new \Magento\Framework\Exception\LocalizedException(
-                __('File directory \'%1\' is not readable.', $tmpPath)
-            );
+
+        if (!$this->fileUploader->setTmpDir($this->importDir)) {
+            try {
+                $this->fileHelper->checkAndCreateFolder($this->importDir);
+            } catch (\Exception $e) {
+//            return array('errors' => 'Import folder does not exist');
+                throw new \Magento\Framework\Exception\LocalizedException(
+                    __('File directory \'%1\' is not readable.', $this->importDir)
+                );
+            }
         }
         $destinationDir = "catalog/product";
         $destinationPath = $dirAddon . $DS . $this->mediaDirectory->getRelativePath($destinationDir);
