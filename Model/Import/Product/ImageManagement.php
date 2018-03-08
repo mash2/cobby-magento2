@@ -533,6 +533,7 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         if (!$this->fileUploader->setTmpDir($this->importDir)) {
             try {
                 $this->fileHelper->checkAndCreateFolder($this->importDir);
+                $this->fileUploader->setTmpDir($this->importDir);
             } catch (\Exception $e) {
 //            return array('errors' => 'Import folder does not exist');
                 throw new \Magento\Framework\Exception\LocalizedException(
