@@ -1,4 +1,5 @@
 <?php
+
 namespace Mash2\Cobby\Model\Import\Product;
 
 use Magento\Framework\App\Filesystem\DirectoryList;
@@ -12,13 +13,13 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
     /**
      * Media gallery attribute code.
      */
-    const MEDIA_GALLERY_ATTRIBUTE_CODE  = 'media_gallery';
-    const MEDIA_IMPORT_PATH             = '/pub/media/import';
-    const ERROR_FILE_NOT_DOWNLOADED     = 2;
-    const ERROR_FILE_NOT_FOUND          = 1;
+    const MEDIA_GALLERY_ATTRIBUTE_CODE = 'media_gallery';
+    const MEDIA_IMPORT_PATH = '/pub/media/import';
+    const ERROR_FILE_NOT_DOWNLOADED = 2;
+    const ERROR_FILE_NOT_FOUND = 1;
 
     private $uploadMediaFiles = array();
-    
+
     /**
      * @var \Magento\Framework\Filesystem\Directory\WriteInterface
      */
@@ -45,7 +46,7 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
      * @var \Magento\CatalogImportExport\Model\Import\Uploader
      */
     protected $fileUploader;
-    
+
     /**
      * @var \Magento\CatalogImportExport\Model\Import\UploaderFactory
      */
@@ -134,20 +135,21 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         \Magento\Framework\Filesystem\Io\File $fileHelper,
         \Magento\Catalog\Helper\Image $imageHelper,
         \Magento\Framework\Image\AdapterFactory $imageAdapterFactory
-    ) {
+    )
+    {
         parent::__construct($resourceModel, $productCollectionFactory, $eventManager, $resourceHelper, $product);
-        $this->settings                     = $settings;
-        $this->mediaDirectory               = $filesystem->getDirectoryWrite(DirectoryList::ROOT);
-        $this->storeManager                 = $storeManager;
-        $this->resource                     = $resourceFactory->create();
-        $this->uploaderFactory              = $uploaderFactory;
+        $this->settings = $settings;
+        $this->mediaDirectory = $filesystem->getDirectoryWrite(DirectoryList::ROOT);
+        $this->storeManager = $storeManager;
+        $this->resource = $resourceFactory->create();
+        $this->uploaderFactory = $uploaderFactory;
         $this->initMediaGalleryResources();
-        $this->productCollectionFactory     = $productCollectionFactory;
-        $this->attributeCollectionFactory   = $attributeCollectionFactory;
-        $this->fileHelper                   = $fileHelper;
-        $this->imageHelper                  = $imageHelper;
-        $this->imageAdapter                 = $imageAdapterFactory->create();
-        $this->importDir                    = $this->mediaDirectory->getAbsolutePath('pub/media/import');
+        $this->productCollectionFactory = $productCollectionFactory;
+        $this->attributeCollectionFactory = $attributeCollectionFactory;
+        $this->fileHelper = $fileHelper;
+        $this->imageHelper = $imageHelper;
+        $this->imageAdapter = $imageAdapterFactory->create();
+        $this->importDir = $this->mediaDirectory->getAbsolutePath('pub/media/import');
     }
 
     private function getStoreIds()
@@ -197,7 +199,7 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         $productIds = array_keys($mediaGallery);
 
         $this->eventManager->dispatch('cobby_import_product_media_import_before', array(
-            'products' => $productIds ));
+            'products' => $productIds));
 
         $this->saveMediaImages($mediaGallery);
         $this->saveMediaGallery($mediaGallery);
@@ -206,24 +208,24 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         $this->touchProducts($productIds);
 
         $this->eventManager->dispatch('cobby_import_product_media_import_after', array(
-            'products' => $productIds ));
+            'products' => $productIds));
 
         $storedMediaGallery = $this->getMediaGallery($productIds, $this->getStoreIds());
         $productAttributes = $this->getAttributes($productIds);
 
         foreach ($mediaGallery as $prodId => $value) {
-            if (!in_array($prodId, array_keys($storedMediaGallery))){
+            if (!in_array($prodId, array_keys($storedMediaGallery))) {
                 $storedMediaGallery[$prodId] = array();
-			}
+            }
 
             $result[] = array(
-                'product_id'                                            => $prodId,
-                \Mash2\Cobby\Model\Export\Product::COL_IMAGE_GALLERY    => $storedMediaGallery[$prodId],
-                \Mash2\Cobby\Model\Export\Product::COL_ATTRIBUTES       => $productAttributes,
-                'errors'                                                => $value['errors']
+                'product_id' => $prodId,
+                \Mash2\Cobby\Model\Export\Product::COL_IMAGE_GALLERY => $storedMediaGallery[$prodId],
+                \Mash2\Cobby\Model\Export\Product::COL_ATTRIBUTES => $productAttributes,
+                'errors' => $value['errors']
             );
-		}
-		
+        }
+
         return $result;
     }
 
@@ -245,16 +247,15 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                     ['mgvte' => $this->mediaGalleryEntityToValueTableName],
                     '(mg.value_id = mgvte.value_id)',
                     ['value_id' => 'mgvte.value_id']
-                )->where('mgvte.'.$this->getProductEntityLinkField().' = ?', $linkId) );
+                )->where('mgvte.' . $this->getProductEntityLinkField() . ' = ?', $linkId));
 
             $images = $productImageData['images'];
-            $newImages = array_diff(array_values($images),array_keys($mediaValues));
+            $newImages = array_diff(array_values($images), array_keys($mediaValues));
             $deletedImages = array_diff(array_keys($mediaValues), array_values($images));
 
-            foreach($deletedImages as $file)
-            {
+            foreach ($deletedImages as $file) {
                 if (array_key_exists($file, $mediaValues)) {
-                    $deleteValueId =  $mediaValues[$file];
+                    $deleteValueId = $mediaValues[$file];
                     $this->connection->delete($this->mediaGalleryValueTableName, $this->connection->quoteInto('value_id IN (?)', $deleteValueId));
                     $this->connection->delete($this->mediaGalleryTableName, $this->connection->quoteInto('value_id IN (?)', $deleteValueId));
                     //TODO: M2 Skinny table
@@ -269,7 +270,7 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                     $valueArr = array(
                         'attribute_id' => $galleryAttributeId,
 //                        'entity_id'    => $productId,
-                        'value'        => $file
+                        'value' => $file
                     );
                     $imageNames[] = $file;
                     $multiInsertData[] = $valueArr;
@@ -307,7 +308,7 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                 ];
             }
 
-            if($multiInsertData) {
+            if ($multiInsertData) {
                 $this->connection->insertOnDuplicate(
                     $this->mediaGalleryValueTableName,
                     $multiInsertData,
@@ -357,7 +358,7 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                 fclose($fileHandle);
                 // @codingStandardsIgnoreEnd
 
-                $this->imageAdapter->validateUploadFile($dir.'/'.$fileName);
+                $this->imageAdapter->validateUploadFile($dir . '/' . $fileName);
 
                 return true;
             } catch (\Exception $e) {
@@ -375,9 +376,8 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         $existingProductIds = $this->loadExistingProductIds($productIds);
         $storeIds = array_keys($this->storeManager->getStores(true));
 
-        foreach($rows as $productId => $mediaData)
-        {
-            if(!in_array($productId, $existingProductIds))
+        foreach ($rows as $productId => $mediaData) {
+            if (!in_array($productId, $existingProductIds))
                 continue;
 
             $result[$productId] = array();
@@ -392,16 +392,15 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
             $attributes = $mediaData['attributes'];
             $useDefaultStores = $mediaData['use_default_stores'];
 
-            foreach($images as $imageData)
-            {
+            foreach ($images as $imageData) {
                 $downloadedImage = false;
-                $externalImage   = false;
-                $importError     = false;
+                $externalImage = false;
+                $importError = false;
 
                 $image = $imageData['image'];
 
-                if(!empty($imageData['import'])) {
-                    if(empty($imageData['name'])) {
+                if (!empty($imageData['import'])) {
+                    if (empty($imageData['name'])) {
                         $imageData['name'] = $image;
                     }
 
@@ -415,9 +414,9 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                         $importError = true;
                     }
 
-                }else  if(!empty($imageData['upload'])) {
+                } else if (!empty($imageData['upload'])) {
                     $externalImage = true;
-                    if(empty($imageData['name'])) {
+                    if (empty($imageData['name'])) {
                         // @codingStandardsIgnoreStart
                         $imageData['name'] = basename(parse_url($imageData['upload'], PHP_URL_PATH));
                         // @codingStandardsIgnoreEnd
@@ -425,7 +424,7 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                     $downloadedImage = $this->_copyExternalImageFile($imageData['upload'], $imageData['name']);
                 }
 
-                if(!empty($imageData['import']) || !empty($imageData['upload'])) {
+                if (!empty($imageData['import']) || !empty($imageData['upload'])) {
                     if (!array_key_exists($imageData['name'], $uploadedGalleryFiles)) {
                         $uploadedGalleryFiles[$imageData['name']] = $this->uploadMediaFiles($imageData['name']);
                     }
@@ -435,13 +434,14 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                     try {
                         // validation of image file
                         $this->imageAdapter->validateUploadFile($filename);
+                        $mediaGallery[$productId]['images'][$imageData['image']] = $imageData['file'];
                     } catch (\Exception $e) {
                         if ($externalImage && !$downloadedImage) {
                             $mediaGallery[$productId]['errors'][] = array(
                                 'image' => $imageData['image'],
                                 'file' => $imageData['upload'],
                                 'error_code' => self::ERROR_FILE_NOT_DOWNLOADED);
-                        } else if ($importError){
+                        } else if ($importError) {
                             $mediaGallery[$productId]['errors'][] = array(
                                 'image' => $imageData['image'],
                                 'file' => $imageData['import'],
@@ -449,20 +449,17 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                         }
                     }
                 }
-
-                if(!isset($mediaGallery[$productId]['errors'][$imageData['image']])){
-                    $mediaGallery[$productId]['images'][$imageData['image']] = $imageData['file'];
-                }
             }
 
-            foreach($gallery as $storeId => $storeGalleryData)
-            {
-                if(!in_array($storeId, $storeIds))
+            $errors = array_column($mediaGallery[$productId]['errors'], 'image');
+
+            foreach ($gallery as $storeId => $storeGalleryData) {
+                if (!in_array($storeId, $storeIds))
                     continue;
 
                 $mediaGallery[$productId]['gallery'][$storeId] = array();
-                foreach($storeGalleryData as $galleryData){
-                    if(!isset($mediaGallery[$productId]['errors'][$galleryData['image']])) {
+                foreach ($storeGalleryData as $galleryData) {
+                    if (!in_array($galleryData['image'], $errors)){
                         $mediaGallery[$productId]['gallery'][$storeId][] = array(
                             'image' => $galleryData['image'],
                             'disabled' => $galleryData['disabled'],
@@ -474,16 +471,13 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                 }
             }
 
-            foreach($attributes as $storeId => $storeAttributeData)
-            {
-                if(!in_array($storeId, $storeIds))
+            foreach ($attributes as $storeId => $storeAttributeData) {
+                if (!in_array($storeId, $storeIds))
                     continue;
 
                 $mediaGallery[$productId]['attributes'][$storeId] = array();
-                foreach($storeAttributeData as $imageAttribute => $image) {
-
-                    if(!isset($mediaGallery[$productId]['errors'][$image])) {
-
+                foreach ($storeAttributeData as $imageAttribute => $image) {
+                    if (!in_array($image, $errors)) {
                         if (in_array($storeId, $useDefaultStores))
                             $image = '';
 
@@ -495,13 +489,14 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
 
         return $mediaGallery;
     }
+
     // @codingStandardsIgnoreEnd
 
     private function uploadMediaFiles($fileName)
     {
         try {
             // cache uploaded files
-            if(isset($this->uploadMediaFiles[$fileName]))
+            if (isset($this->uploadMediaFiles[$fileName]))
                 return $this->uploadMediaFiles[$fileName];
 
             $res = $this->fileUploader->move($fileName);
@@ -511,11 +506,11 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
             return '';
         }
     }
-    
+
     private function initUploader()
     {
         $this->fileUploader = $this->uploaderFactory->create();
-        
+
         $this->fileUploader->init();
 
         $dirConfig = DirectoryList::getDefaultConfig();
@@ -528,19 +523,17 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
 //        } else {
 //            $this->importDir = $dirAddon . $DS . $this->mediaDirectory->getAbsolutePath('import');
 //        }
-
-
         if (!$this->fileUploader->setTmpDir($this->importDir)) {
-            try {
-                $this->fileHelper->checkAndCreateFolder($this->importDir);
-                $this->fileUploader->setTmpDir($this->importDir);
-            } catch (\Exception $e) {
-//            return array('errors' => 'Import folder does not exist');
-                throw new \Magento\Framework\Exception\LocalizedException(
-                    __('File directory \'%1\' is not readable.', $this->importDir)
-                );
-            }
+            throw new \Magento\Framework\Exception\LocalizedException(
+                __('File directory \'%1\' is not readable.', $this->importDir)
+            );
         }
+        if (!$this->fileHelper->isWriteable($this->importDir)) {
+            throw new \Magento\Framework\Exception\LocalizedException(
+                __('File directory \'%1\' is not writable.', $this->importDir)
+            );
+        }
+
         $destinationDir = "catalog/product";
         $destinationPath = $dirAddon . $DS . $this->mediaDirectory->getRelativePath($destinationDir);
 
@@ -552,7 +545,6 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         }
     }
 
-    
 
     /**
      * Save product media gallery.
@@ -573,31 +565,28 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                     ['mgvte' => $this->mediaGalleryEntityToValueTableName],
                     '(mg.value_id = mgvte.value_id)',
                     ['value_id' => 'mgvte.value_id']
-                )->where('mgvte.'.$this->getProductEntityLinkField().' = ? ', $linkId) );
+                )->where('mgvte.' . $this->getProductEntityLinkField() . ' = ? ', $linkId));
 
             $images = $productImageData['images'];
             $gallery = $productImageData['gallery'];
 
-            foreach($gallery as $storeId => $storeGalleryData)
-            {
-                foreach($storeGalleryData as $galleryData)
-                {
+            foreach ($gallery as $storeId => $storeGalleryData) {
+                foreach ($storeGalleryData as $galleryData) {
                     $image = $galleryData['image'];
                     $file = $images[$image];
                     $valueId = $mediaValues[$file];
 
                     $this->connection->delete($this->mediaGalleryValueTableName, array(
-                        'value_id=?'      => (int) $valueId,
-                        'store_id=?'       => (int) $storeId,
+                        'value_id=?' => (int)$valueId,
+                        'store_id=?' => (int)$storeId,
                     ));
 
-                    if($galleryData['use_default'] == false)
-                    {
+                    if ($galleryData['use_default'] == false) {
                         $insertValueArr = array(
                             'value_id' => $valueId,
                             'store_id' => $storeId,
                             $this->getProductEntityLinkField() => $linkId,
-                            'label'    => $galleryData['label'],
+                            'label' => $galleryData['label'],
                             'position' => $galleryData['position'],
                             'disabled' => $galleryData['disabled']
                         );
@@ -614,17 +603,14 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
     {
         $attributesData = array();
 
-        foreach ($mediaGalleryData as $productId => $productImageData)
-        {
+        foreach ($mediaGalleryData as $productId => $productImageData) {
             $attributes = $productImageData['attributes'];
             $images = $productImageData['images'];
 
-            foreach($attributes as $storeId => $storeAttributeData)
-            {
-                foreach ($storeAttributeData as $key => $value)
-                {
+            foreach ($attributes as $storeId => $storeAttributeData) {
+                foreach ($storeAttributeData as $key => $value) {
                     $file = null;
-                    if(!empty($value) && isset($images[$value])){
+                    if (!empty($value) && isset($images[$value])) {
                         $file = $value == 'no_selection' ? 'no_selection' : $images[$value];
                     }
 
@@ -659,16 +645,16 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                             $tableData[] = array(
                                 $this->getProductEntityLinkField() => $this->getLinkId($productId),
 //                                'entity_type_id' => $this->_entityTypeId,
-                                'attribute_id'   => $attributeId,
-                                'store_id'       => $storeId,
-                                'value'          => $storeValue
+                                'attribute_id' => $attributeId,
+                                'store_id' => $storeId,
+                                'value' => $storeValue
                             );
                         } else {
                             $this->connection->delete($tableName, array(
                                 $this->getProductEntityLinkField() => $this->getLinkId($productId),
 //                                'entity_type_id=?' => (int) $this->_entityTypeId,
-                                'attribute_id=?'   => (int) $attributeId,
-                                'store_id=?'       => (int) $storeId,
+                                'attribute_id=?' => (int)$attributeId,
+                                'store_id=?' => (int)$storeId,
                             ));
                         }
                     }
@@ -682,7 +668,8 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         return $this;
     }
 
-    public function getLinkId($productId){
+    public function getLinkId($productId)
+    {
         $linkId = $this->connection->fetchOne(
             $this->connection->select()
                 ->from($this->resourceModel->getTableName('catalog_product_entity'))
