@@ -396,6 +396,7 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                 $downloadedImage = false;
                 $externalImage = false;
                 $importError = false;
+                $errArr = array();
 
                 $image = $imageData['image'];
 
@@ -434,20 +435,25 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                     try {
                         // validation of image file
                         $this->imageAdapter->validateUploadFile($filename);
-                        $mediaGallery[$productId]['images'][$imageData['image']] = $imageData['file'];
                     } catch (\Exception $e) {
                         if ($externalImage && !$downloadedImage) {
                             $mediaGallery[$productId]['errors'][] = array(
                                 'image' => $imageData['image'],
                                 'file' => $imageData['upload'],
                                 'error_code' => self::ERROR_FILE_NOT_DOWNLOADED);
+                            $errArr['errors'][$imageData['image']] = self::ERROR_FILE_NOT_DOWNLOADED;
                         } else if ($importError) {
                             $mediaGallery[$productId]['errors'][] = array(
                                 'image' => $imageData['image'],
                                 'file' => $imageData['import'],
                                 'error_code' => self::ERROR_FILE_NOT_FOUND);
+                            $errArr['errors'][$imageData['image']] = self::ERROR_FILE_NOT_FOUND;
                         }
                     }
+                }
+
+                if (!isset($errArr['errors'][$imageData['image']])){
+                    $mediaGallery[$productId]['images'][$imageData['image']] = $imageData['file'];
                 }
             }
 
