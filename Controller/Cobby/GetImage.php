@@ -6,21 +6,34 @@
  * Time: 10:51
  */
 
-namespace Mash2\Cobby\Controller\Test;
+namespace Mash2\Cobby\Controller\Cobby;
 
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Filesystem;
+//use Magento\Framework\Filesystem;
+//use \Magento\Catalog\Model\ProductFactory;
 
-class Sayhello extends \Magento\Framework\App\Action\Action
+class GetImage extends \Magento\Framework\App\Action\Action implements \Magento\Framework\App\ActionInterface
 {
     protected $_filesystem;
+    protected $_productFactory;
+    protected $_imageHelper;
 
+    /**
+     * GetImage constructor.
+     * @param \Magento\Framework\Filesystem $filesystem
+     * @param \Magento\Catalog\Model\ProductFactory $productFactory
+     * @param \Magento\Framework\App\Action\Context $context
+     */
     public function __construct(
-        Context $context,
-        \Magento\Framework\Filesystem $_filesystem
+        \Magento\Framework\App\Action\Context $context,
+        \Magento\Framework\Filesystem $filesystem,
+        \Magento\Catalog\Model\ProductFactory $productFactory,
+        \Magento\Catalog\Helper\Image $imageHelper
     ){
+        $this->_filesystem = $filesystem;
+        $this->_productFactory = $productFactory;
+        $this->_imageHelper = $imageHelper;
         parent::__construct($context);
-        $this->_filesystem = $_filesystem;
     }
 
     /**
@@ -28,10 +41,8 @@ class Sayhello extends \Magento\Framework\App\Action\Action
      */
     public function execute()
     {
-//        die("Hello 😉 - Inchoo\\CustomControllers\\Controller\\Demonstration\\Sayhello - execute() method");
-        if ($this->getRequest()->getParam('function') == 'getImage') {
-            $this->getImage();
-        }
+//        die("Hello 😉 - Inchoo\\CustomControllers\\Controller\\Demonstration\\GetImage - execute() method");
+        $this->getImage();
     }
 
     private function getImage()
@@ -70,14 +81,17 @@ class Sayhello extends \Magento\Framework\App\Action\Action
         $baseMediaUrl = $this->_filesystem->getDirectoryRead(DirectoryList::MEDIA)->getAbsolutePath();
         $baseMediaDir = DirectoryList::MEDIA;
 
+
+
         if ((int)$id){
-            $product = Mage::getModel('catalog/product')->load($id);
+            $product = $this->_productFactory->create();
+            $product->load($id);
             if ($product->getId()) {
                 foreach ($product->getMediaGallery('images') as $image) {
                     $tokens = explode('/', $image['file']);
                     $str = trim(end($tokens));
                     if ($str == $filename){
-                        $file = Mage::helper('catalog/image')->init($product, 'thumbnail', $image['file']);
+                        $file = $this->_imageHelper->init($product, 'thumbnail', $image['file']);
                         $fileString = (string)$file;
                         $filePath = str_replace($baseMediaUrl, $baseMediaDir, $fileString);
 
@@ -86,16 +100,18 @@ class Sayhello extends \Magento\Framework\App\Action\Action
                 }
             }
         } else if (file_exists($baseMediaDir . 'import/'. $filename)) {
-            $filePath = $baseMediaDir . 'import/' . $filename;
+            $filePath = $baseMediaUrl . 'import/' . $filename;
 
             return $filePath;
         }
 
+        // for debug reasons anchor: palceholder
+        $filePath = "http://magento.local:8080/pub/media/catalog/product/m/b/mb02-gray-0.jpg";
 //        $placeholder = Mage::getDesign()->getSkinUrl('images/catalog/product/placeholder/thumbnail.jpg');
 //        $baseSkinUrl = Mage::getBaseUrl('skin');
 //        $baseSkinDir = Mage::getBaseDir() . DS . 'skin' . DS;
 //        $filePath = str_replace($baseSkinUrl, $baseSkinDir, $placeholder);
 
-//        return $filePath;
+        return $filePath;
     }
 }
