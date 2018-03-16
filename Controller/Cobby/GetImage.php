@@ -17,6 +17,10 @@ class GetImage extends \Magento\Framework\App\Action\Action implements \Magento\
     protected $_filesystem;
     protected $_productFactory;
     protected $_imageHelper;
+    protected $_fileHelper;
+    protected $_storeManager;
+    protected $_productHelper;
+    protected $_productRepository;
 
     /**
      * GetImage constructor.
@@ -28,11 +32,19 @@ class GetImage extends \Magento\Framework\App\Action\Action implements \Magento\
         \Magento\Framework\App\Action\Context $context,
         \Magento\Framework\Filesystem $filesystem,
         \Magento\Catalog\Model\ProductFactory $productFactory,
-        \Magento\Catalog\Helper\Image $imageHelper
+        \Magento\Catalog\Helper\Image $imageHelper,
+        \Magento\Catalog\Helper\Product $productHelper,
+        \Magento\Framework\Filesystem\Io\File $fileHelper,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Catalog\Model\ProductRepository $productRepository
     ){
         $this->_filesystem = $filesystem;
         $this->_productFactory = $productFactory;
         $this->_imageHelper = $imageHelper;
+        $this->_fileHelper = $fileHelper;
+        $this->_storeManager = $storeManager;
+        $this->_productHelper = $productHelper;
+        $this->_productRepository = $productRepository;
         parent::__construct($context);
     }
 
@@ -56,7 +68,9 @@ class GetImage extends \Magento\Framework\App\Action\Action implements \Magento\
         $type = 'image/jpeg';
 
 //        header('Content-Type: image/jpeg');
-//        readfile("/var/www/html/pub/media/import/tasche.jpg");
+//        readfile($filePath);  //only for debug
+//
+//        return;
 
         $this->getResponse()
             ->setHttpResponseCode(200)
@@ -65,53 +79,57 @@ class GetImage extends \Magento\Framework\App\Action\Action implements \Magento\
         $this->getResponse()->clearBody();
         $this->getResponse()->sendHeaders();
 
-        $ioAdapter = new \Magento\Framework\Filesystem\Io\File();
-        $ioAdapter->open(array('path' => $ioAdapter->dirname($filePath)));
-//        $ioAdapter->streamOpen($file, 'r');
-        while ($buffer = $ioAdapter->streamRead()) {
-            print $buffer;
-        }
-        $ioAdapter->streamClose();
+//        $ioAdapter = $this->_fileHelper;//new \Magento\Framework\Filesystem\Io\File();
+//        $ioAdapter->open(array('path' => $ioAdapter->dirname($filePath)));
+        print $this->_fileHelper->read($filePath);
+//        while ($buffer = $ioAdapter->read($filePath)) {
+//            print $buffer;
+//        }
+//        $ioAdapter->streamClose();
     }
 
     private function getImagePath($id ,$filename)
     {
-        $dirConfig = DirectoryList::getDefaultConfig();
-        $dirAddon = $dirConfig[DirectoryList::MEDIA][DirectoryList::PATH];
-        $baseMediaUrl = $this->_filesystem->getDirectoryRead(DirectoryList::MEDIA)->getAbsolutePath();
-        $baseMediaDir = DirectoryList::MEDIA;
-
-
+        $baseUrl = $this->_storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);
+        $workDir = $this->_filesystem->getDirectoryRead('base')->getAbsolutePath();
+        $mediaName = DirectoryList::MEDIA;
+        $baseMediaDir = $this->_filesystem->getDirectoryRead($mediaName)->getAbsolutePath();
 
         if ((int)$id){
-            $product = $this->_productFactory->create();
-            $product->load($id);
+//            $product = $this->_productFactory->create();
+//            $product->load($id);
+            $product = $this->_productRepository->getById($id);
             if ($product->getId()) {
-                foreach ($product->getMediaGallery('images') as $image) {
-                    $tokens = explode('/', $image['file']);
+                foreach ($product->getMediaGalleryImages()->getItems() as $image) {
+                    $tokens = explode('/', $image->getFile());
                     $str = trim(end($tokens));
                     if ($str == $filename){
-                        $file = $this->_imageHelper->init($product, 'thumbnail', $image['file']);
-                        $fileString = (string)$file;
-                        $filePath = str_replace($baseMediaUrl, $baseMediaDir, $fileString);
+//                        $file = $this->_imageHelper->init($product, $image['file'], array('thumbnail'));
+                        $fileUrl = $this->_imageHelper->init($product, $image->getId())->getUrl();
+//                        $url = $this->_productHelper->getThumbnailUrl($product);
+//                        $fileString = (string)$file;
+                        $filePath = str_replace($baseUrl, $workDir, $fileUrl);
 
                         return $filePath;
                     }
                 }
             }
-        } else if (file_exists($baseMediaDir . 'import/'. $filename)) {
-            $filePath = $baseMediaUrl . 'import/' . $filename;
+        } else if ($this->_fileHelper->fileExists($baseMediaDir . 'import/'. $filename)) {
+            $filePath = $baseMediaDir . 'import/' . $filename;
 
             return $filePath;
         }
 
         // for debug reasons anchor: palceholder
-        $filePath = "http://magento.local:8080/pub/media/catalog/product/m/b/mb02-gray-0.jpg";
-//        $placeholder = Mage::getDesign()->getSkinUrl('images/catalog/product/placeholder/thumbnail.jpg');
-//        $baseSkinUrl = Mage::getBaseUrl('skin');
-//        $baseSkinDir = Mage::getBaseDir() . DS . 'skin' . DS;
-//        $filePath = str_replace($baseSkinUrl, $baseSkinDir, $placeholder);
+//        $filePath = "http://magento.local:8080/pub/media/catalog/product/m/b/mb02-gray-0.jpg";
+        $filePathString = "/var/www/html/vendor/magento/module-catalog/view/base/web/images/product/placeholder/thumbnail.jpg";
 
-        return $filePath;
+        $placeHolderImage = $this->_imageHelper->getPlaceholder();
+        $placeHolderImageUrl = $this->_imageHelper->getDefaultPlaceholderUrl($placeHolderImage);
+        $this->_productHelper->getThumbnailUrl();
+        $filePath = str_replace($baseUrl, $workDir, $placeHolderImageUrl);
+//        $this->_imageHelper->getImage();
+
+        return $filePathString;
     }
 }
