@@ -14,6 +14,7 @@ use Magento\Framework\App\Filesystem\DirectoryList;
 
 class GetImage extends \Magento\Framework\App\Action\Action implements \Magento\Framework\App\ActionInterface
 {
+    const PLACEHOLDER_PATH = 'vendor/magento/module-catalog/view/base/web/images/product/placeholder/thumbnail.jpg';
     protected $_filesystem;
     protected $_productFactory;
     protected $_imageHelper;
@@ -53,13 +54,11 @@ class GetImage extends \Magento\Framework\App\Action\Action implements \Magento\
      */
     public function execute()
     {
-//        die("Hello 😉 - Inchoo\\CustomControllers\\Controller\\Demonstration\\GetImage - execute() method");
         $this->getImage();
     }
 
     private function getImage()
     {
-
         $id = $this->getRequest()->getParam('id');
         $filename = $this->getRequest()->getParam('filename');
 
@@ -74,18 +73,12 @@ class GetImage extends \Magento\Framework\App\Action\Action implements \Magento\
 
         $this->getResponse()
             ->setHttpResponseCode(200)
-            ->setHeader('Content-type', $type, true);
+            ->setHeader('Content-type', 'image/jpeg', true);
 
         $this->getResponse()->clearBody();
         $this->getResponse()->sendHeaders();
 
-//        $ioAdapter = $this->_fileHelper;//new \Magento\Framework\Filesystem\Io\File();
-//        $ioAdapter->open(array('path' => $ioAdapter->dirname($filePath)));
         print $this->_fileHelper->read($filePath);
-//        while ($buffer = $ioAdapter->read($filePath)) {
-//            print $buffer;
-//        }
-//        $ioAdapter->streamClose();
     }
 
     private function getImagePath($id ,$filename)
@@ -96,18 +89,15 @@ class GetImage extends \Magento\Framework\App\Action\Action implements \Magento\
         $baseMediaDir = $this->_filesystem->getDirectoryRead($mediaName)->getAbsolutePath();
 
         if ((int)$id){
-//            $product = $this->_productFactory->create();
-//            $product->load($id);
             $product = $this->_productRepository->getById($id);
             if ($product->getId()) {
                 foreach ($product->getMediaGalleryImages()->getItems() as $image) {
                     $tokens = explode('/', $image->getFile());
                     $str = trim(end($tokens));
                     if ($str == $filename){
-//                        $file = $this->_imageHelper->init($product, $image['file'], array('thumbnail'));
-                        $fileUrl = $this->_imageHelper->init($product, $image->getId())->getUrl();
-//                        $url = $this->_productHelper->getThumbnailUrl($product);
-//                        $fileString = (string)$file;
+                        $fileUrl = $this->_imageHelper->init($product, 'product_thumbnail_image')
+                            ->setImageFile($image->getFile())
+                            ->getUrl();
                         $filePath = str_replace($baseUrl, $workDir, $fileUrl);
 
                         return $filePath;
@@ -120,16 +110,14 @@ class GetImage extends \Magento\Framework\App\Action\Action implements \Magento\
             return $filePath;
         }
 
-        // for debug reasons anchor: palceholder
-//        $filePath = "http://magento.local:8080/pub/media/catalog/product/m/b/mb02-gray-0.jpg";
-        $filePathString = "/var/www/html/vendor/magento/module-catalog/view/base/web/images/product/placeholder/thumbnail.jpg";
+//        $placeHolderImageUrl = $this->_imageHelper->getDefaultPlaceholderUrl();
+//        $placholder = $this->_imageHelper->getPlaceholder('thumbnail');
+//        $filePath = str_replace($baseUrl, $workDir, $placeHolderImageUrl);
+//
+//        return $filePath;
 
-        $placeHolderImage = $this->_imageHelper->getPlaceholder();
-        $placeHolderImageUrl = $this->_imageHelper->getDefaultPlaceholderUrl($placeHolderImage);
-        $this->_productHelper->getThumbnailUrl();
-        $filePath = str_replace($baseUrl, $workDir, $placeHolderImageUrl);
-//        $this->_imageHelper->getImage();
+        $filePath = $workDir . self::PLACEHOLDER_PATH;
 
-        return $filePathString;
+        return $filePath;
     }
 }
