@@ -28,30 +28,54 @@ class IndexerRepository implements \Mash2\Cobby\Api\IndexerRepositoryInterface
     protected $jsonHelper;
 
     /**
+     * @var \Magento\Catalog\Model\Indexer\Product\Flat\State
+     */
+    protected $productFlatState;
+
+    /**
+     * @var \Magento\Catalog\Model\Indexer\Category\Flat\State
+     */
+    protected $categoryFlatState;
+
+    /**
      * @param \Magento\Indexer\Model\Indexer\Collection $indexerCollection
      * @param \Magento\Indexer\Model\Indexer $indexer
      * @param \Magento\Catalog\Model\Indexer\Product\Flat\Processor $flatProcessor
      * @param \Magento\Framework\Json\Helper\Data $jsonHelper
+     * @param \Magento\Catalog\Model\Indexer\Product\Flat\State $productFlatState
+     * @param \Magento\Catalog\Model\Indexer\Category\Flat\State $categoryFlatState
      */
     public function __construct(
         \Magento\Indexer\Model\Indexer\Collection $indexerCollection,
         \Magento\Indexer\Model\Indexer $indexer,
         \Magento\Catalog\Model\Indexer\Product\Flat\Processor $flatProcessor,
-        \Magento\Framework\Json\Helper\Data $jsonHelper
+        \Magento\Framework\Json\Helper\Data $jsonHelper,
+        \Magento\Catalog\Model\Indexer\Product\Flat\State $productFlatState,
+        \Magento\Catalog\Model\Indexer\Category\Flat\State $categoryFlatState
     )
     {
         $this->indexerCollection = $indexerCollection;
         $this->indexer = $indexer;
         $this->flatProcessor = $flatProcessor;
         $this->jsonHelper = $jsonHelper;
+        $this->productFlatState = $productFlatState;
+        $this->categoryFlatState = $categoryFlatState;
     }
-
 
     public function export()
     {
         $result = array();
 
         foreach ($this->indexerCollection as $item) {
+            if(
+                ($item->getState()->getIndexerId() == 'catalog_product_flat' &&
+                    !$this->productFlatState->isFlatEnabled()) ||
+                ($item->getState()->getIndexerId() == 'catalog_category_flat' &&
+                    !$this->categoryFlatState->isFlatEnabled())
+            ) {
+                continue;
+            }
+
             $result[] = array(
                 'code' => $item->getState()->getIndexerId(),
                 'status' => $item->getView()->getState()->getStatus(),
