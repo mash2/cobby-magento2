@@ -518,6 +518,7 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         $this->fileUploader = $this->uploaderFactory->create();
 
         $this->fileUploader->init();
+        $this->fileUploader->setAllowRenameFiles(!$this->settings->getOverwriteImages());
 
         $dirConfig = DirectoryList::getDefaultConfig();
         $dirAddon = $dirConfig[DirectoryList::MEDIA][DirectoryList::PATH];
