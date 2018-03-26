@@ -10,6 +10,12 @@ class Category extends \Mash2\Cobby\Model\Plugin\AbstractPlugin
     ) {
         $categoryResource->addCommitCallback(function () use ($category) {
             $this->enqueueAndNotify('category', 'save', $category->getId());
+
+            $affectedProductIds = $category->getAffectedProductIds();
+            if ($affectedProductIds) {
+                $this->updateHash($affectedProductIds);
+                $this->enqueueAndNotify('product', 'save', $affectedProductIds);
+            }
         });
 
         return $proceed($category);
