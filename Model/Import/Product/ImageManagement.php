@@ -532,12 +532,12 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
 //        }
         if (!$this->fileUploader->setTmpDir($this->importDir)) {
             throw new \Magento\Framework\Exception\LocalizedException(
-                __('File directory \'%1\' is not readable.', $this->importDir)
+                __('cobby: File directory \'%1\' is not readable.', $this->importDir)
             );
         }
         if (!$this->fileHelper->isWriteable($this->importDir)) {
             throw new \Magento\Framework\Exception\LocalizedException(
-                __('File directory \'%1\' is not writable.', $this->importDir)
+                __('cobby: File directory \'%1\' is not writable.', $this->importDir)
             );
         }
 
@@ -547,7 +547,7 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         $this->mediaDirectory->create($destinationPath);
         if (!$this->fileUploader->setDestDir($destinationPath)) {
             throw new \Magento\Framework\Exception\LocalizedException(
-                __('File directory \'%1\' is not writable.', $destinationPath)
+                __('cobby: File directory \'%1\' is not writable.', $destinationPath)
             );
         }
     }
