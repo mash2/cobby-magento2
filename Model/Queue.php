@@ -16,7 +16,60 @@ class Queue extends \Magento\Framework\Model\AbstractModel
     const ADMIN_SESSION         = 'admin';
     const WEBAPI_REST_SESSION   = 'PHPSESSID';
 
-    protected function _construct()
+    /**
+     * @var \Magento\Framework\Session\SessionManager
+     */
+    private $sessionManager;
+
+    /**
+     * @var UserContextInterface
+     */
+    private $userContext;
+
+    /**
+     * @var \Magento\Authorization\Model\CompositeUserContext
+     */
+    private $compositeUserContext;
+
+    /**
+     * @var \Magento\User\Model\User
+     */
+    private $user;
+
+    /**
+     * Queue constructor.
+     * @param \Magento\Framework\Session\SessionManager $sessionManager
+     * @param UserContextInterface $userContext
+     * @param \Magento\Authorization\Model\CompositeUserContext $compositeUserContext
+     * @param \Magento\User\Model\User $user
+     * @param \Magento\Framework\Model\Context $context
+     * @param \Magento\Framework\Registry $registry
+     * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
+     * @param \Magento\Framework\Data\Collection\AbstractDb|null $resourceCollection
+     * @param array $data
+     */
+    public function __construct(
+        \Magento\Framework\Session\SessionManager $sessionManager,
+        \Magento\Authorization\Model\UserContextInterface $userContext,
+        \Magento\Authorization\Model\CompositeUserContext $compositeUserContext,
+        \Magento\User\Model\User $user,
+        \Magento\Framework\Model\Context $context,
+        \Magento\Framework\Registry $registry,
+        \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
+        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
+        array $data = []
+    )
+    {
+        parent::__construct($context, $registry, $resource, $resourceCollection, $data);
+
+        $this->sessionManager = $sessionManager;
+        $this->userContext = $userContext;
+        $this->compositeUserContext = $compositeUserContext;
+        $this->user = $user;
+    }
+
+    protected function _construct(
+    )
     {
         $this->_init('Mash2\Cobby\Model\ResourceModel\Queue');
     }
@@ -31,9 +84,8 @@ class Queue extends \Magento\Framework\Model\AbstractModel
 
     private function getCurrentContext()
     {
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $session = $objectManager->get('\Magento\Framework\Session\SessionManager');
-        $user = $objectManager->get('Magento\Authorization\Model\UserContextInterface');
+        $session = $this->sessionManager;
+        $user = $this->userContext;
 
         $userType = '';
         $sessionName = '';
@@ -41,8 +93,8 @@ class Queue extends \Magento\Framework\Model\AbstractModel
         if ($user){
             $userType = $user ->getUserType();
             if ($userType == UserContextInterface::USER_TYPE_ADMIN){
-                $userId = $objectManager->get('\Magento\Authorization\Model\CompositeUserContext')->getUserId();
-                $userName = $objectManager->get('Magento\User\Model\User')->load($userId)->getUserName();
+                $userId = $this->compositeUserContext->getUserId();
+                $userName = $this->user->load($userId)->getUserName();
             }
         }
 
