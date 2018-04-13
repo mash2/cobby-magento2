@@ -345,7 +345,7 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                 $ch = curl_init($url);
                 curl_setopt($ch, CURLOPT_TIMEOUT, 50);
                 curl_setopt($ch, CURLOPT_FILE, $fileHandle);
-                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                #curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
                 // use basic auth ony current installation
                 //TODO: M2 .htaccess is missing
                 //if( $this->_htUser != '' && $this->_htPassword != '' && parse_url($url, PHP_URL_HOST) == parse_url($this->_mediaUrl, PHP_URL_HOST))
@@ -354,10 +354,14 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
 //                    curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 //                }
                 curl_exec($ch);
+                $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 curl_close($ch);
                 fclose($fileHandle);
                 // @codingStandardsIgnoreEnd
 
+                if ($http_code !== 200) {
+                    throw new \Exception();
+                }
                 $this->imageAdapter->validateUploadFile($dir . '/' . $fileName);
 
                 return true;
@@ -530,6 +534,8 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
 //        } else {
 //            $this->importDir = $dirAddon . $DS . $this->mediaDirectory->getAbsolutePath('import');
 //        }
+
+//        turned off 4 debug
         if (!$this->fileUploader->setTmpDir($this->importDir)) {
             throw new \Magento\Framework\Exception\LocalizedException(
                 __('cobby: File directory \'%1\' is not readable.', $this->importDir)
