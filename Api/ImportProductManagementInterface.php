@@ -9,7 +9,8 @@ interface ImportProductManagementInterface
     /**
      * @api
      * @param array $rows
+     * @param string $transactionId
      * @return mixed
      */
-    public function import($rows);
+    public function import($rows, $transactionId);
 }

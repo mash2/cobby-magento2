@@ -122,10 +122,10 @@ class Import implements \Mash2\Cobby\Api\ImportInterface
     /**
      * @inheritdoc
      */
-    public function importProducts($jsonData)
+    public function importProducts($jsonData, $transactionId)
     {
         $rows = $this->jsonHelper->jsonDecode($jsonData);
-        $result = $this->importProduct->import($rows);
+        $result = $this->importProduct->import($rows, $transactionId);
         return $result;
     }
 

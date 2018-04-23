@@ -4,6 +4,7 @@ namespace Mash2\Cobby\Setup;
 use Magento\Framework\Setup\UpgradeSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
+use Mash2\Cobby\Helper\Settings;
 
 
 class UpgradeSchema implements UpgradeSchemaInterface
@@ -34,6 +35,18 @@ class UpgradeSchema implements UpgradeSchemaInterface
             }
         }
 
+        if (version_compare($context->getVersion(), '2.0.2', '<')) {
+            $setup->getConnection()->addColumn(
+                $setup->getTable('mash2_cobby_queue'),
+                'transaction_id',
+                [
+                    'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                    'length' => 255,
+                    'nullable' => true,
+                    'comment' => 'transaction id'
+                ]
+            );
+        }
 
         $setup->endSetup();
 

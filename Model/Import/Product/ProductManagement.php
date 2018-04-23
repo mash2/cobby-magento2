@@ -258,9 +258,10 @@ class ProductManagement extends AbstractManagement// \Magento\CatalogImportExpor
 
     /**
      * @param array $rows
+     * @param $transactionId
      * @return array
      */
-    public function import($rows)
+    public function import($rows, $transactionId)
     {
         $result = array();
 
@@ -287,7 +288,7 @@ class ProductManagement extends AbstractManagement// \Magento\CatalogImportExpor
             $this->eventManager->dispatch('cobby_import_product_import_before', array(
                 'transport' => $transportObject));
 
-            $this->saveProducts($rows);
+            $this->saveProducts($rows, $transactionId);
 
             $this->eventManager->dispatch('cobby_import_product_import_after', array('transport' => $transportObject));
         }
@@ -483,7 +484,7 @@ class ProductManagement extends AbstractManagement// \Magento\CatalogImportExpor
         return $this->_prepareRowForDb($result);
     }
 
-    protected function saveProducts($rows)
+    protected function saveProducts($rows, $transactionId)
     {
         $entityRowsIn = [];
         $attributes = [];
@@ -603,7 +604,7 @@ class ProductManagement extends AbstractManagement// \Magento\CatalogImportExpor
 
         if (!empty($productIds)){
             $this->product->updateHash($productIds);
-            $this->queue->enqueueAndNotify('product', 'save', $productIds);
+            $this->queue->enqueueAndNotify('product', 'save', $productIds, $transactionId);
         }
 
         return $this;

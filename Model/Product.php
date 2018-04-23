@@ -79,7 +79,7 @@ class Product extends \Magento\Framework\Model\AbstractModel
     /**
      * @var
      */
-    public $mathRandom;
+    private $mathRandom;
 
     /**
      * @param \Magento\Framework\Math\Random $mathRandom

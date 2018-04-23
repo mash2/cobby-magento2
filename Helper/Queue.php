@@ -35,27 +35,32 @@ class Queue extends \Magento\Framework\App\Helper\AbstractHelper
      */
     private $cobbySettings;
 
+    private $mathRandom;
+
     /**
      * constructor.
      *
      * @param \Magento\Framework\App\Helper\Context $context
-     * @param CobbyApi                              $cobbyApi
-     * @param \Mash2\Cobby\Model\QueueFactory       $queueFactory
-     * @param \Magento\Framework\Registry           $registry
-     * @param Settings                              $cobbySettings
+     * @param CobbyApi $cobbyApi
+     * @param \Mash2\Cobby\Model\QueueFactory $queueFactory
+     * @param \Magento\Framework\Registry $registry
+     * @param Settings $cobbySettings
+     * @param \Magento\Framework\Math\Random $mathRandom
      */
     public function __construct(
         \Magento\Framework\App\Helper\Context $context,
         \Mash2\Cobby\Helper\CobbyApi $cobbyApi,
         \Mash2\Cobby\Model\QueueFactory $queueFactory,
         \Magento\Framework\Registry $registry,
-        \Mash2\Cobby\Helper\Settings $cobbySettings
+        \Mash2\Cobby\Helper\Settings $cobbySettings,
+        \Magento\Framework\Math\Random $mathRandom
     ) {
         parent::__construct($context);
         $this->queueFactory = $queueFactory;
         $this->cobbyApi = $cobbyApi;
         $this->registry = $registry;
         $this->cobbySettings = $cobbySettings;
+        $this->mathRandom = $mathRandom;
     }
 
     /**
@@ -64,17 +69,25 @@ class Queue extends \Magento\Framework\App\Helper\AbstractHelper
      * @param $entity
      * @param $action
      * @param $ids
+     * @param $transactionId
      * @return array
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
-    private function enqueue($entity, $action, $ids)
+    private function enqueue($entity, $action, $ids, $transactionId)
     {
         $result = array();
+
+        if (!isset($transactionId)) {
+            $transactionId = $this->mathRandom->getRandomString(30);
+        }
+
         $batches = $this->splitObjectIds($ids);
         foreach ($batches as $batch) {
             $queue = $this->queueFactory->create();
             $queue->setObjectIds($batch);
             $queue->setObjectEntity($entity);
             $queue->setObjectAction($action);
+            $queue->setTransactionId($transactionId);
             $queue->save();
             $result[] = $queue->getId();
         }
@@ -86,10 +99,11 @@ class Queue extends \Magento\Framework\App\Helper\AbstractHelper
      * save changes to queue and notify cobby service
      *
      * @param $entity
-     * @param $ids
      * @param $action
+     * @param $ids
+     * @param $transactionId
      */
-    public function enqueueAndNotify($entity, $action, $ids)
+    public function enqueueAndNotify($entity, $action, $ids, $transactionId = null)
     {
         if ($this->registry->registry('is_cobby_import') == 1) { //do nothing if is cobby import
             return;
@@ -101,7 +115,7 @@ class Queue extends \Magento\Framework\App\Helper\AbstractHelper
             $manageStock == \Mash2\Cobby\Helper\Settings::MANAGE_STOCK_READONLY ||
             $entity != 'stock'){
             try {
-                $queueIds = $this->enqueue($entity, $action, $ids);
+                $queueIds = $this->enqueue($entity, $action, $ids, $transactionId);
                 //notify only with with the id from the first batch
                 $this->cobbyApi->notifyCobbyService($entity, $action, $queueIds[0]);
 

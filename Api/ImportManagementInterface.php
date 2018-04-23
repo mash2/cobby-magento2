@@ -10,9 +10,10 @@ interface ImportManagementInterface
      *
      * @api
      * @param string $jsonData
+     * @param string $transactionId
      * @return mixed
      */
-    public function importProducts($jsonData);
+    public function importProducts($jsonData, $transactionId);
 
     /**
      * @api
