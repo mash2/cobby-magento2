@@ -565,7 +565,7 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
                     //TODO: evtl delete mit mehreren daten auf einmal
                     /** @var Magento_Db_Adapter_Pdo_Mysql $connection */
                     $this->connection->delete($tableName, array(
-                        $this->getProductEntityLinkField() => $linkId,
+                        $this->getProductEntityLinkField() .'=?' => $linkId,
                         'attribute_id=?'   => (int) $attributeId,
                         'store_id=?'       => (int) $storeId,
                     ));

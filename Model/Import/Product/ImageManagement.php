@@ -657,15 +657,13 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                         if (!is_null($storeValue)) {
                             $tableData[] = array(
                                 $this->getProductEntityLinkField() => $this->getLinkId($productId),
-//                                'entity_type_id' => $this->_entityTypeId,
                                 'attribute_id' => $attributeId,
                                 'store_id' => $storeId,
                                 'value' => $storeValue
                             );
                         } else {
                             $this->connection->delete($tableName, array(
-                                $this->getProductEntityLinkField() => $this->getLinkId($productId),
-//                                'entity_type_id=?' => (int) $this->_entityTypeId,
+                                $this->getProductEntityLinkField() .'=?' => $this->getLinkId($productId),
                                 'attribute_id=?' => (int)$attributeId,
                                 'store_id=?' => (int)$storeId,
                             ));
