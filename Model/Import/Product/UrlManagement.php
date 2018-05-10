@@ -324,8 +324,8 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
          */
         $urls = array_merge(
             $this->canonicalUrlRewriteGenerate(),
-            $this->categoriesUrlRewriteGenerate(),
-            $this->currentUrlRewritesRegenerate()
+            $this->categoriesUrlRewriteGenerate()
+           // $this->currentUrlRewritesRegenerate()
         );
 
         /* Reduce duplicates. Last wins */
