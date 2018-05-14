@@ -18,6 +18,7 @@ env:
     - magento=2.2.1
     - magento=2.2.2
     - magento=2.2.3
+    - magento=2.2.4
 
 matrix:
   exclude:
@@ -29,6 +30,8 @@ matrix:
       env: magento=2.2.2
     - php: 5.6
       env: magento=2.2.3
+    - php: 5.6
+      env: magento=2.2.4
 
 cache:
   directories:
