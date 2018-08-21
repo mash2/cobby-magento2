@@ -68,6 +68,13 @@ interface ImportInterface
      * @param string $jsonData
      * @return mixed
      */
+    public function importProductCustomOption($jsonData);
+
+    /**
+     * @api
+     * @param string $jsonData
+     * @return mixed
+     */
     public function importProductUrls($jsonData);
 
     /**
