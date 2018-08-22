@@ -5,6 +5,7 @@ use Braintree\Exception;
 use Magento\Catalog\Model\Category;
 use Magento\Catalog\Model\Product\Visibility;
 use Magento\UrlRewrite\Service\V1\Data\UrlRewrite;
+use Magento\UrlRewrite\Model\OptionProvider;
 use Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator;
 use Magento\UrlRewrite\Model\UrlFinderInterface;
 use Magento\Store\Model\Store;
@@ -21,6 +22,8 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
      * Url key attribute code
      */
     const URL_KEY = 'url_key';
+
+    const COBBY_IMPORT = 1;
 
     /**
      * Column product store.
@@ -100,6 +103,7 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
     protected $vitalForGenerationFields = [
         'sku',
         'url_key',
+        'old_url_key',
         'url_path',
         'name',
         'visibility',
@@ -109,6 +113,8 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
     protected $urlRewriteFactory;
 
     protected $newUrl;
+
+    protected $oldUrl;
 
     /**
      * constructor.
@@ -193,6 +199,8 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
             $attributesData[$productId] = $this->prepareUrlAttributes($productId, $storeValues);
             foreach($storeValues as $storeValue) {
                 $this->_populateForUrlGeneration($productId, $rowData['website_ids'], $rowData['category_ids'], $storeValue);
+                //$this->newUrl = $storeValue['url_key'];
+                //$this->oldUrl = $storeValue['old_url'];
             }
             $changedProductIds[] = $productId;
         }
@@ -209,7 +217,7 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
 
             if ($filteredProductUrls) {
                 $defaultStoreUrls = array_filter($filteredProductUrls, function($k){
-                    return $k->getMetadata() == null;
+                    return $k->getMetadata() == self::COBBY_IMPORT;
                 });
 
                 $urls = array();
@@ -219,7 +227,7 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
                     $urls[] = array(
                         "store_id" => $storeUrl->getStoreId(),
 
-                        "url_key" => $storeUrl->getRequestPath());
+                        "url_key" => $storeUrl->getTargetPath());
                 }
                 try {
                     $this->urlPersist->replace($filteredProductUrls);
@@ -312,6 +320,12 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
         return null === $storeId || $storeId == Store::DEFAULT_STORE_ID;
     }
 
+    protected function formatUrl($url)
+    {
+        $formatedUrl = str_replace(' ', '-', $url).'.html';
+        return $formatedUrl;
+    }
+
     /**
      * Generate product url rewrites
      *
@@ -325,7 +339,8 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
         $urls = array_merge(
             $this->canonicalUrlRewriteGenerate(),
             $this->categoriesUrlRewriteGenerate(),
-            $this->currentUrlRewritesRegenerate()
+            $this->currentUrlRewritesRegenerate(),
+            $this->urlRewriteGenerate()
         );
 
         /* Reduce duplicates. Last wins */
@@ -354,7 +369,8 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
                         ->setTargetPath($this->productUrlPathGenerator->getCanonicalUrlPath($product))
                         ->setStoreId($storeId);
 
-                    $this->newUrl = $this->productUrlPathGenerator->getUrlPathWithSuffix($product, $storeId);
+                    //$this->newUrl = $this->productUrlPathGenerator->getUrlPathWithSuffix($product, $storeId);
+                    //$this->oldUrl = $this->formatUrl($product->getOldUrlKey());
                 }
             }
         }
@@ -407,9 +423,32 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
             ]
         );
 
-        $urlRewrites[] = $currentUrlRewrites[0]->setData('target_path', $this->newUrl);
+        //$urlRewrites[] = $currentUrlRewrites[0]->setData('target_path', $this->newUrl);
+        //$this->oldUrl = $currentUrlRewrites[0]->getRequestPath();
+        $urlRewrites = $currentUrlRewrites;
 
         return $urlRewrites;
+    }
+
+    protected function urlRewriteGenerate()
+    {
+        $urls = [];
+
+        foreach ($this->products as $productId => $productsByStore) {
+            foreach ($productsByStore as $storeId => $product) {
+                $urls[] = $this->urlRewriteFactory->create()
+                    ->setEntityType(ProductUrlRewriteGenerator::ENTITY_TYPE)
+                    ->setEntityId($productId)
+                    ->setTargetPath($this->productUrlPathGenerator->getUrlPathWithSuffix($product, $storeId))
+                    ->setRequestPath($this->formatUrl($product->getOldUrlKey()))
+                    ->setRedirectType(OptionProvider::PERMANENT)
+                    ->setDescription(null)
+                    ->setIsAutogenerated(1)
+                    ->setStoreId($storeId)
+                    ->setMetadata(self::COBBY_IMPORT);
+            }
+        }
+        return $urls;
     }
 
     /**
