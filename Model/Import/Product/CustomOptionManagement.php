@@ -110,17 +110,17 @@ class CustomOptionManagement extends AbstractManagement implements \Mash2\Cobby\
                 $action = '';
                 switch ($productCustomOption['action']) {
                     case self::ADD:
-                        $action = 'add';
+                        $action = self::ADD;
                         break;
                     case self::DELETE:
-                        $action = 'delete';
+                        $action = self::DELETE;
                         break;
                     case self::UPDATE:
-                        $action = 'update';
+                        $action = self::UPDATE;
                         break;
                     case self::UPDATE_TYPE:
                         $deletePriceTable[] = $productCustomOption['option_id'];
-                        $action = 'update';
+                        $action = self::UPDATE;
                         break;
 
                 }
@@ -172,13 +172,23 @@ class CustomOptionManagement extends AbstractManagement implements \Mash2\Cobby\
                         $nextValueId = $this->nextAutoValueId++;
                     }
 
-                    $items[$action][$productId]['values'][] = array(
-                        'option_type_id' => $nextValueId,
-                        'option_id' => $nextOptionId,
-                        'action' => $value['action'],
-                        'sku' => $value['sku'],
-                        'sort_order' => $value['sort_order']
-                    );
+                    if ($productCustomOption['action'] == 'add' && $value['action'] == 'add') {
+                        $items[$action][$productId]['values'][] = array(
+                            'option_type_id' => $nextValueId,
+                            'option_id' => $nextOptionId,
+                            'sku' => $value['sku'],
+                            'sort_order' => $value['sort_order']
+                        );
+                    }
+                    else {
+                        $items[$action][$productId]['values'][] = array(
+                            'option_type_id' => $nextValueId,
+                            'option_id' => $nextOptionId,
+                            'action' => $value['action'],
+                            'sku' => $value['sku'],
+                            'sort_order' => $value['sort_order']
+                        );
+                    }
 
                     foreach($value['titles'] as $valueTitle) {
                         $items[$action][$productId]['values_titles'][] = array(
@@ -251,7 +261,7 @@ class CustomOptionManagement extends AbstractManagement implements \Mash2\Cobby\
             }
         }
 
-        $this->connection->delete($this->optionTable, array($this->connection->quoteInto('option_id = ?', $items)));
+        $this->connection->delete($this->optionTable, array($this->connection->quoteInto('option_id IN (?)', $items)));
     }
 
     protected function deletePriceTable($optionIds)
