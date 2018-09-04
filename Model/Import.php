@@ -52,7 +52,12 @@ class Import implements \Mash2\Cobby\Api\ImportInterface
      * @var \Mash2\Cobby\Api\ImportProductConfigurableManagementInterface
      */
     private $importProductConfigurable;
-    
+
+    /**
+     * @var \Mash2\Cobby\Api\ImportProductCustomOptionManagementInterface
+     */
+    private $importProductCustomOption;
+
     /**
      * @var \Mash2\Cobby\Api\ImportProductUrlManagementInterface
      */
@@ -83,6 +88,7 @@ class Import implements \Mash2\Cobby\Api\ImportInterface
      * @param \Mash2\Cobby\Api\ImportProductImageManagementInterface $importProductImage
      * @param \Mash2\Cobby\Api\ImportProductGroupedManagementInterface $importProductGrouped
      * @param \Mash2\Cobby\Api\ImportProductConfigurableManagementInterface $importProductConfigurable
+     * @param \Mash2\Cobby\Api\ImportProductCustomOptionManagementInterface $importProductCustomOption
      * @param \Mash2\Cobby\Api\ImportProductUrlManagementInterface $importProductUrl
      * @param \Magento\ImportExport\Model\ImportFactory $importModelFactory
      * @param \Mash2\Cobby\Api\ImportProductBundleManagementInterface $importProductBundle
@@ -98,6 +104,7 @@ class Import implements \Mash2\Cobby\Api\ImportInterface
         \Mash2\Cobby\Api\ImportProductImageManagementInterface $importProductImage,
         \Mash2\Cobby\Api\ImportProductGroupedManagementInterface $importProductGrouped,
         \Mash2\Cobby\Api\ImportProductConfigurableManagementInterface $importProductConfigurable,
+        \Mash2\Cobby\Api\ImportProductCustomOptionManagementInterface $importProductCustomOption,
         \Mash2\Cobby\Api\ImportProductUrlManagementInterface $importProductUrl,
         \Magento\ImportExport\Model\ImportFactory $importModelFactory,
         \Mash2\Cobby\Api\ImportProductBundleManagementInterface $importProductBundle,
@@ -113,6 +120,7 @@ class Import implements \Mash2\Cobby\Api\ImportInterface
         $this->importProductImage = $importProductImage;
         $this->importProductGrouped = $importProductGrouped;
         $this->importProductConfigurable = $importProductConfigurable;
+        $this->importProductCustomOption= $importProductCustomOption;
         $this->importProductUrl = $importProductUrl;
         $this->importModelFactory = $importModelFactory;
         $this->importProductBundle = $importProductBundle;
@@ -196,6 +204,18 @@ class Import implements \Mash2\Cobby\Api\ImportInterface
     {
         $rows = $this->jsonHelper->jsonDecode($jsonData);
         $result = $this->importProductConfigurable->import($rows);
+        return true;
+    }
+
+    /**
+     * @param string $jsonData
+     * @return bool|mixed
+     * @inheritdoc
+     */
+    public function importProductCustomOption($jsonData)
+    {
+        $rows = $this->jsonHelper->jsonDecode($jsonData);
+        $this->importProductCustomOption->import($rows);
         return true;
     }
 
