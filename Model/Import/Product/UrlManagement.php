@@ -176,6 +176,7 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
     public function import($rows)
     {
         $result = array();
+        $backupData = array();
 
         $productIds = array_column($rows, 'product_id');
         $existingProductIds = $this->loadExistingProductIds($productIds);
@@ -191,6 +192,7 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
 
             $storeValues = $rowData['values'];
             $attributesData[$productId] = $this->prepareUrlAttributes($productId, $storeValues);
+            $backupData[$productId] = $storeValues;
             foreach($storeValues as $storeValue) {
                 $this->_populateForUrlGeneration($productId, $rowData['website_ids'], $rowData['category_ids'], $storeValue);
             }
@@ -214,6 +216,8 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
 
                 $urls = array();
                 $error_code = null;
+                $faultyStoreIds = array();
+
 
                 foreach ($defaultStoreUrls as $storeUrl){
                     $urls[] = array(
@@ -225,9 +229,47 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
                     $this->urlPersist->replace($filteredProductUrls);
                 } catch (UrlAlreadyExistsException $e) {
                     $error_code = RowValidator::ERROR_DUPLICATE_URL_KEY;
+                    $error_msg = $e->getMessage();
+
+                    $storeIds = array(0);
+                    foreach ($e->getUrls() as $url) {
+                        if (!in_array($url['store_id'], $storeIds)) {
+                            $storeIds[] = $url['store_id'];
+                        }
+                    }
+
+                    $product = $this->catalogProductFactory->create();
+
+                    foreach($backupData as $productId => $storeValues) {
+                        foreach($storeValues as $storeValue) {
+                            if (in_array($storeValue['store_id'], $storeIds)) {
+                                $product->setStoreId($storeValue['store_id']);
+                                $product->load($productId);
+                                $product->setUrlKey($storeValue['old_url_key']);
+                                $product->save();
+
+                                $faultyStoreIds[] = $storeValue['store_id'];
+
+                                if($this->isGlobalScope($storeValue['store_id'])) {
+                                    $urls[] = array(
+                                        'store_id' => $storeValue['store_id'],
+                                        'url_key' => $storeValue['url_key'].'html'
+                                    );
+                                }
+                            }
+                        }
+
+                    }
+
+//                    $this->urlPersist->deleteByData(array(
+//                        'entity_type' => 'product',
+//                        'entity_id' => 5
+//                    ));
+
+                    //$this->urlPersist->replace(array($));
                 }
 
-                $result[] = array("product_id" => $productId, "urls" => $urls, "error_code" => $error_code);
+                $result[] = array("product_id" => $productId, "urls" => $urls, "error_code" => $error_code, "error_message" => $error_msg, 'store_ids' => $faultyStoreIds);
             }
         }
 
