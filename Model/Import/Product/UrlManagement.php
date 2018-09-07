@@ -260,13 +260,6 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
                         }
 
                     }
-
-//                    $this->urlPersist->deleteByData(array(
-//                        'entity_type' => 'product',
-//                        'entity_id' => 5
-//                    ));
-
-                    //$this->urlPersist->replace(array($));
                 }
 
                 $result[] = array("product_id" => $productId, "urls" => $urls, "error_code" => $error_code, "error_message" => $error_msg, 'store_ids' => $faultyStoreIds);
