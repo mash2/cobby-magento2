@@ -136,7 +136,7 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
             }
 
             if ($attribute->usesSource()) {
-                if( $attribute->getSource() instanceof \Magento\Eav\Model\Entity\Attribute\Source\Table  ) {
+                if( $attribute->getSource() instanceof \Magento\Eav\Model\Entity\Attribute\Source\Table) {
                     if ($filter != null){
                         $options = $this->optionCollectionFactory->create()
                             ->addFieldToFilter('tdv.value', $filter)
