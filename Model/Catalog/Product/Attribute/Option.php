@@ -61,6 +61,15 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
      */
     protected $swatchHelper;
 
+    protected $adapterFactory;
+    protected $config;
+    protected $filesystem;
+    protected $uploaderFactory;
+
+    protected $defaultValue;
+    protected $optionsArray;
+    protected $swatchesArray;
+
     /**
      * Import constructor.
      * @param \Magento\Framework\Json\Helper\Data $jsonHelper
@@ -83,7 +92,12 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
         \Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\CollectionFactory $optionCollectionFactory,
         \Magento\Framework\Event\ManagerInterface $eventManager,
         \Magento\Swatches\Helper\Data $swatchHelper,
-        \Magento\Eav\Api\AttributeOptionManagementInterface $eavOptionManagement
+        \Magento\Eav\Api\AttributeOptionManagementInterface $eavOptionManagement,
+        \Magento\Framework\Image\AdapterFactory $adapterFactory,
+        \Magento\Catalog\Model\Product\Media\Config $config,
+        \Magento\Framework\Filesystem $filesystem,
+        \Magento\MediaStorage\Model\File\UploaderFactory $mediaUploaderFactory,
+        \Magento\CatalogImportExport\Model\Import\UploaderFactory $uploaderFactory
     ) {
         $this->jsonHelper = $jsonHelper;
         $this->productResource = $productResource;
@@ -95,6 +109,10 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
         $this->eventManager = $eventManager;
         $this->eavOptionManagement = $eavOptionManagement;
         $this->swatchHelper = $swatchHelper;
+        $this->adapterFactory = $adapterFactory;
+        $this->config = $config;
+        $this->filesystem = $filesystem;
+        $this->uploaderFactory = $uploaderFactory;
     }
 
     public function export($attributeId){
@@ -208,6 +226,9 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
                     $options = $this->getOptions($attributeId, $label);
 
                     if (empty($options) || (int)$requestedOption['option_id']) {
+                        if($requestedOption['swatch'] !== '') {
+                            $this->_prepareSwatch($requestedOption['option_id'], $requestedOption['swatch'], $label, $attribute);
+                        }
                         $this->_saveAttributeOptions($attribute, array($requestedOption));
                         $options = $this->getOptions($attributeId, $label);
                         if ($this->swatchHelper->isTextSwatch($attribute)) {
@@ -223,6 +244,132 @@ class Option implements \Mash2\Cobby\Api\CatalogProductAttributeOptionInterface
         }
 
         return $result;
+    }
+
+    protected function _prepareSwatch($optionId, $swatchValue, $label, $attribute) {
+        $color = strpos($swatchValue, '#') === 0 ? true : false;
+
+        if (!$color) {
+            $fileName = $this->generateRandomString();
+            $this->_copyExternalImageFile($swatchValue, $fileName);
+            $this->_upload();
+        }
+
+        $defaultValue = array(0 => $optionId);
+        $swatchesArray = array(
+            'value' => array(
+                $optionId => $swatchValue
+            )
+        );
+
+        $order = array(
+        );
+
+        $value = array(
+            $optionId => array(
+                0 => $label,
+                1 => ''
+            )
+        );
+
+        $delete = array(
+            $optionId => ''
+        );
+
+        $optionsArray = [
+            'order' => $order,
+            'value' => $value,
+            'delete' => $delete
+        ];
+
+        $attribute->setData('defaultvisual', $defaultValue);
+        $attribute->setData('optionvisual', $optionsArray);
+        $attribute->setData('swatchvisual', $swatchesArray);
+    }
+
+    protected function _copyExternalImageFile($url, $fileName)
+    {
+        if (strpos($url, 'http') === 0 && strpos($url, '://') !== false) {
+            try {
+                //$dir = $this->mediaDirectory->getAbsolutePath('tmp');
+                $dir = '/tmp';
+
+                // @codingStandardsIgnoreStart
+                $fileHandle = fopen($dir . '/' . basename($fileName), 'w+');
+                $ch = curl_init($url);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 50);
+                curl_setopt($ch, CURLOPT_FILE, $fileHandle);
+                #curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                // use basic auth ony current installation
+                //TODO: M2 .htaccess is missing
+                //if( $this->_htUser != '' && $this->_htPassword != '' && parse_url($url, PHP_URL_HOST) == parse_url($this->_mediaUrl, PHP_URL_HOST))
+//                {
+//                    curl_setopt($ch, CURLOPT_USERPWD, "$this->_htUser:$this->_htPassword");
+//                    curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+//                }
+                curl_exec($ch);
+                $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+                fclose($fileHandle);
+                // @codingStandardsIgnoreEnd
+
+                if ($http_code !== 200) {
+                    throw new \Exception();
+                }
+                //$this->imageAdapter->validateUploadFile($dir . '/' . $fileName);
+
+                return true;
+            } catch (\Exception $e) {
+                return false;
+            }
+        }
+    }
+
+    protected function _upload()
+    {
+        try {
+            //$uploader = $this->uploaderFactory->create(['fileId' => 'datafile']);
+            $uploader = $this->uploaderFactory->create();
+            $uploader->setAllowedExtensions(['jpg', 'jpeg', 'gif', 'png']);
+            /** @var \Magento\Framework\Image\Adapter\AdapterInterface $imageAdapter */
+            $imageAdapter = $this->adapterFactory->create();
+            $uploader->addValidateCallback('catalog_product_image', $imageAdapter, 'validateUploadFile');
+            $uploader->setAllowRenameFiles(true);
+            $uploader->setFilesDispersion(true);
+            /** @var \Magento\Framework\Filesystem\Directory\Read $mediaDirectory */
+            $mediaDirectory = $this->filesystem->getDirectoryRead(DirectoryList::MEDIA);
+            $config = $this->config;
+            $result = $uploader->save($mediaDirectory->getAbsolutePath($config->getBaseTmpMediaPath()));
+            unset($result['path']);
+
+            $this->_eventManager->dispatch(
+                'swatch_gallery_upload_image_after',
+                ['result' => $result, 'action' => $this]
+            );
+
+            unset($result['tmp_name']);
+
+            $result['url'] = $this->config->getTmpMediaUrl($result['file']);
+            $result['file'] = $result['file'] . '.tmp';
+
+            $newFile = $this->swatchHelper->moveImageFromTmp($result['file']);
+            $this->swatchHelper->generateSwatchVariations($newFile);
+            $fileData = ['swatch_path' => $this->swatchHelper->getSwatchMediaUrl(), 'file_path' => $newFile];
+            $this->getResponse()->setBody(json_encode($fileData));
+        } catch (\Exception $e) {
+            $result = ['error' => $e->getMessage(), 'errorcode' => $e->getCode()];
+            $this->getResponse()->setBody(json_encode($result));
+        }
+    }
+
+    public function generateRandomString($length = 10) {
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $charactersLength = strlen($characters);
+        $randomString = '';
+        for ($i = 0; $i < $length; $i++) {
+            $randomString .= $characters[rand(0, $charactersLength - 1)];
+        }
+        return $randomString;
     }
 
     /**
