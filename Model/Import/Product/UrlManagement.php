@@ -110,6 +110,9 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
 
     protected $newUrls;
 
+    protected $productVisibility;
+    protected $productStatus;
+
     /**
      * constructor.
      * @param \Magento\Framework\App\ResourceConnection $resourceModel
@@ -143,7 +146,9 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
         \Magento\Catalog\Model\ProductFactory $catalogProductFactory,
         UrlRewriteFactory $urlRewriteFactory,
         \Magento\CatalogImportExport\Model\Import\Product\CategoryProcessor $categoryProcessor,
-        \Mash2\Cobby\Model\Product $product
+        \Mash2\Cobby\Model\Product $product,
+        \Magento\Catalog\Model\Product\Attribute\Source\Status $productStatus,
+        \Magento\Catalog\Model\Product\Visibility $productVisibility
     ) {
         parent::__construct($resourceModel, $productCollectionFactory, $eventManager, $resourceHelper, $product);
         $this->settings = $settings;
@@ -156,6 +161,8 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
         $this->urlRewriteFactory = $urlRewriteFactory;
         $this->productUrlPathGenerator = $productUrlPathGenerator;
         $this->categoryProcessor = $categoryProcessor;
+        $this->productStatus = $productStatus;
+        $this->productVisibility = $productVisibility;
 
         $this->initStores();
     }
@@ -175,7 +182,7 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
 
     public function import($rows)
     {
-        $result = array();
+        //$result = array();
 
         $productIds = array_column($rows, 'product_id');
         $existingProductIds = $this->loadExistingProductIds($productIds);
@@ -199,6 +206,71 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
 
         $this->saveProductAttributes($attributesData);
         $this->touchProducts($changedProductIds);
+
+
+        $result = $this->setUrls($changedProductIds);
+
+        /*
+        $productUrls = $this->generateUrls();
+
+        foreach ($changedProductIds as $productId) {
+            $filteredProductUrls = array_filter($productUrls, function($k) use($productId){
+                return $k->getEntityId() == $productId;
+            });
+
+            if ($filteredProductUrls) {
+                $defaultStoreUrls = array_filter($filteredProductUrls, function($k){
+                    return $k->getMetadata() == null;
+                });
+
+                $urls = array();
+                $error_code = null;
+
+                foreach ($defaultStoreUrls as $storeUrl){
+                    $urls[] = array(
+                        "store_id" => $storeUrl->getStoreId(),
+
+                        "url_key" => $storeUrl->getRequestPath());
+                }
+                try {
+                    $this->urlPersist->replace($filteredProductUrls);
+                } catch (UrlAlreadyExistsException $e) {
+                    $error_code = RowValidator::ERROR_DUPLICATE_URL_KEY;
+                }
+
+                $result[] = array("product_id" => $productId, "urls" => $urls, "error_code" => $error_code);
+            }
+        }
+        */
+
+        $result = array_merge($result, $existingProductIds);
+
+        $this->eventManager->dispatch('cobby_import_product_url_import_after', array( 'products' => $changedProductIds ));
+
+        return $result;
+    }
+
+    protected function setUrls($productIds)
+    {
+        $result = array();
+
+        $collection = $this->productCollectionFactory->create();
+        $collection->addAttributeToFilter('status', ['in' => $this->productStatus->getVisibleStatusIds()]);
+        //$collection->addAttributeToFilter('visibility', ['in' => 4]);
+        $collection->setVisibility($this->productVisibility->getVisibleInCatalogIds());
+
+        $visibleIds = $collection->getAllIds();
+
+        $changedProductIds = array_intersect($productIds, $visibleIds);
+        /*$urlIds = array();
+
+        foreach($productIds as $productId) {
+            if (in_array($productId, $visibleIds)){
+                $urlIds[] = $productId;
+            }
+        }*/
+
+
 
         $productUrls = $this->generateUrls();
 
@@ -230,8 +302,6 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
                 $result[] = array("product_id" => $productId, "urls" => $urls, "error_code" => $error_code);
             }
         }
-
-        $this->eventManager->dispatch('cobby_import_product_url_import_after', array( 'products' => $changedProductIds ));
 
         return $result;
     }
