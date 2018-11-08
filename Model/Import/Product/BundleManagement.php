@@ -7,7 +7,7 @@ class BundleManagement extends AbstractManagement implements \Mash2\Cobby\Api\Im
     /**
      * @var \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory
      */
-    private $productCollectionFactory;
+    protected $productCollectionFactory;
 
     /**
      * @var

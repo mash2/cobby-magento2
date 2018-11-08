@@ -24,7 +24,7 @@ abstract class AbstractManagement extends \Mash2\Cobby\Model\Import\AbstractEnti
     /**
      * @var \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory
      */
-    private $productCollectionFactory;
+    protected $productCollectionFactory;
 
     /**
      * @var \Magento\Framework\Event\ManagerInterface
