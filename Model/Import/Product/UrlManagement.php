@@ -182,8 +182,6 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
 
     public function import($rows)
     {
-        //$result = array();
-
         $productIds = array_column($rows, 'product_id');
         $existingProductIds = $this->loadExistingProductIds($productIds);
         $changedProductIds = array();
@@ -210,10 +208,28 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
 
         $result = $this->setUrls($changedProductIds);
 
-        /*
+        $this->eventManager->dispatch('cobby_import_product_url_import_after', array( 'products' => $changedProductIds ));
+
+        return $result;
+    }
+
+    protected function setUrls($productIds)
+    {
+        $result = array();
+
+        $collection = $this->productCollectionFactory->create();
+        $collection->addAttributeToFilter('status', ['in' => $this->productStatus->getVisibleStatusIds()]);
+        $collection->setVisibility($this->productVisibility->getVisibleInCatalogIds());
+
+        $visibleIds = $collection->getAllIds();
+
+        $rewriteUrlIds  = array_intersect($productIds, $visibleIds);
+        $invisibleIds   = array_diff($productIds, $visibleIds);
+
         $productUrls = $this->generateUrls();
 
-        foreach ($changedProductIds as $productId) {
+
+        foreach ($rewriteUrlIds as $productId) {
             $filteredProductUrls = array_filter($productUrls, function($k) use($productId){
                 return $k->getEntityId() == $productId;
             });
@@ -241,66 +257,9 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
                 $result[] = array("product_id" => $productId, "urls" => $urls, "error_code" => $error_code);
             }
         }
-        */
 
-        $result = array_merge($result, $existingProductIds);
-
-        $this->eventManager->dispatch('cobby_import_product_url_import_after', array( 'products' => $changedProductIds ));
-
-        return $result;
-    }
-
-    protected function setUrls($productIds)
-    {
-        $result = array();
-
-        $collection = $this->productCollectionFactory->create();
-        $collection->addAttributeToFilter('status', ['in' => $this->productStatus->getVisibleStatusIds()]);
-        //$collection->addAttributeToFilter('visibility', ['in' => 4]);
-        $collection->setVisibility($this->productVisibility->getVisibleInCatalogIds());
-
-        $visibleIds = $collection->getAllIds();
-
-        $changedProductIds = array_intersect($productIds, $visibleIds);
-        /*$urlIds = array();
-
-        foreach($productIds as $productId) {
-            if (in_array($productId, $visibleIds)){
-                $urlIds[] = $productId;
-            }
-        }*/
-
-
-
-        $productUrls = $this->generateUrls();
-
-        foreach ($changedProductIds as $productId) {
-            $filteredProductUrls = array_filter($productUrls, function($k) use($productId){
-                return $k->getEntityId() == $productId;
-            });
-
-            if ($filteredProductUrls) {
-                $defaultStoreUrls = array_filter($filteredProductUrls, function($k){
-                    return $k->getMetadata() == null;
-                });
-
-                $urls = array();
-                $error_code = null;
-
-                foreach ($defaultStoreUrls as $storeUrl){
-                    $urls[] = array(
-                        "store_id" => $storeUrl->getStoreId(),
-
-                        "url_key" => $storeUrl->getRequestPath());
-                }
-                try {
-                    $this->urlPersist->replace($filteredProductUrls);
-                } catch (UrlAlreadyExistsException $e) {
-                    $error_code = RowValidator::ERROR_DUPLICATE_URL_KEY;
-                }
-
-                $result[] = array("product_id" => $productId, "urls" => $urls, "error_code" => $error_code);
-            }
+        foreach ($invisibleIds as $productId) {
+            $result[] = array("product_id" => $productId, "urls" => 'Url was not written, since product is invisible', "error_code" => $error_code);
         }
 
         return $result;
