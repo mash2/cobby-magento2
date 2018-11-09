@@ -113,6 +113,9 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
     protected $productVisibility;
     protected $productStatus;
 
+    private $rewriteUrlIds = array();
+    private $invisibleIds = array();
+
     /**
      * constructor.
      * @param \Magento\Framework\App\ResourceConnection $resourceModel
@@ -180,11 +183,25 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
         return $this;
     }
 
+    private function init($productIds)
+    {
+        $collection = $this->productCollectionFactory->create();
+        $collection->addAttributeToFilter('status', ['in' => $this->productStatus->getVisibleStatusIds()]);
+        $collection->setVisibility($this->productVisibility->getVisibleInCatalogIds());
+
+        $visibleIds = $collection->getAllIds();
+
+        $this->rewriteUrlIds  = array_intersect($productIds, $visibleIds);
+        $this->invisibleIds   = array_diff($productIds, $visibleIds);
+    }
+
     public function import($rows)
     {
         $productIds = array_column($rows, 'product_id');
         $existingProductIds = $this->loadExistingProductIds($productIds);
         $changedProductIds = array();
+        $this->init($productIds);
+
         $this->eventManager->dispatch('cobby_import_product_url_import_before', array( 'products' => $productIds ));
 
         $attributesData = array();
@@ -197,7 +214,9 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
             $storeValues = $rowData['values'];
             $attributesData[$productId] = $this->prepareUrlAttributes($productId, $storeValues);
             foreach($storeValues as $storeValue) {
-                $this->_populateForUrlGeneration($productId, $rowData['website_ids'], $rowData['category_ids'], $storeValue);
+                if (in_array($productId, $this->rewriteUrlIds)){
+                    $this->_populateForUrlGeneration($productId, $rowData['website_ids'], $rowData['category_ids'], $storeValue);
+                }
             }
             $changedProductIds[] = $productId;
         }
@@ -205,31 +224,20 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
         $this->saveProductAttributes($attributesData);
         $this->touchProducts($changedProductIds);
 
-
-        $result = $this->setUrls($changedProductIds);
+        $result = $this->setUrls();
 
         $this->eventManager->dispatch('cobby_import_product_url_import_after', array( 'products' => $changedProductIds ));
 
         return $result;
     }
 
-    protected function setUrls($productIds)
+    protected function setUrls()
     {
         $result = array();
 
-        $collection = $this->productCollectionFactory->create();
-        $collection->addAttributeToFilter('status', ['in' => $this->productStatus->getVisibleStatusIds()]);
-        $collection->setVisibility($this->productVisibility->getVisibleInCatalogIds());
-
-        $visibleIds = $collection->getAllIds();
-
-        $rewriteUrlIds  = array_intersect($productIds, $visibleIds);
-        $invisibleIds   = array_diff($productIds, $visibleIds);
-
         $productUrls = $this->generateUrls();
 
-
-        foreach ($rewriteUrlIds as $productId) {
+        foreach ($this->rewriteUrlIds as $productId) {
             $filteredProductUrls = array_filter($productUrls, function($k) use($productId){
                 return $k->getEntityId() == $productId;
             });
@@ -258,8 +266,8 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
             }
         }
 
-        foreach ($invisibleIds as $productId) {
-            $result[] = array("product_id" => $productId, "urls" => 'Url was not written, since product is invisible', "error_code" => $error_code);
+        foreach ($this->invisibleIds as $productId) {
+            $result[] = array("product_id" => $productId, "urls" => 'Url was not written because the product is invisible.', "error_code" => $error_code);
         }
 
         return $result;
