@@ -1,6 +1,9 @@
 <?php
 namespace Mash2\Cobby\Model\Catalog\Product\Attribute;
 
+use Magento\Framework\App\Filesystem\DirectoryList;
+
+
 /**
  * Class Option
  * @package Mash2\Cobby\Model\Catalog\Product\Attribute
