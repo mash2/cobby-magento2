@@ -43,12 +43,14 @@ class OrderPlaced implements ObserverInterface
         $data = $observer->getEvent()->getOrder()->getData();
 
         $ids = array();
-        foreach ($data['items'] as $item){
-            $ids[] = $item->getData('product_id');
-        }
 
-        $this->queueHelper->enqueueAndNotify('product', 'save', $ids);
-        $this->productModel->updateHash($ids);
+        if (isset($data['items'])) {
+            foreach ($data['items'] as $item){
+                $ids[] = $item->getData('product_id');
+            }
+            $this->queueHelper->enqueueAndNotify('product', 'save', $ids);
+            $this->productModel->updateHash($ids);
+        }
 
         return;
     }
