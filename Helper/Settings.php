@@ -10,8 +10,6 @@ class Settings extends \Magento\Framework\App\Helper\AbstractHelper
     const XML_PATH_PRODUCT_CATEGORY_POSITION    = 'cobby/settings/product_category_position';
     const XML_PATH_LICENSE_KEY                  = 'cobby/settings/license_key';
     const XML_PATH_COBBY_VERSION                = 'cobby/settings/cobby_version';
-    const XML_PATH_COBBY_HTACCESS_PASSWORD      = 'cobby/htaccess/password';
-    const XML_PATH_COBBY_HTACCESS_USER          = 'cobby/htaccess/user';
     const XML_PATH_COBBY_SETTINGS_CONTACT_EMAIL = 'cobby/settings/contact_email';
     const XML_PATH_COBBY_SETTINGS_API_USER      = 'cobby/settings/api_user';
     const XML_PATH_COBBY_SETTINGS_API_PASSWORD  = 'cobby/settings/api_key';
@@ -128,30 +126,6 @@ class Settings extends \Magento\Framework\App\Helper\AbstractHelper
     public function getDefaultQuantity()
     {
         return $this->scopeConfig->getValue(self::XML_PATH_COBBY_SETTINGS_QUANTITY);
-    }
-
-    /**
-     * Get htaccess user
-     *
-     * @return string
-     */
-    public function getHtaccessUser()
-    {
-        return $this->scopeConfig->getValue(self::XML_PATH_COBBY_HTACCESS_USER);
-    }
-
-    /**
-     * Get htaccess password
-     *
-     * @return string
-     */
-    public function getHtaccessPassword()
-    {
-        $password = $this->scopeConfig->getValue(self::XML_PATH_COBBY_HTACCESS_PASSWORD);
-        if (empty($password) || empty($this->getHtaccessUser())) {
-            return '';
-        }
-        return $this->encryptor->decrypt($password);
     }
 
     /**

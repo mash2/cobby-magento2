@@ -346,13 +346,7 @@ class ImageManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                 curl_setopt($ch, CURLOPT_TIMEOUT, 50);
                 curl_setopt($ch, CURLOPT_FILE, $fileHandle);
                 #curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-                // use basic auth ony current installation
-                //TODO: M2 .htaccess is missing
-                //if( $this->_htUser != '' && $this->_htPassword != '' && parse_url($url, PHP_URL_HOST) == parse_url($this->_mediaUrl, PHP_URL_HOST))
-//                {
-//                    curl_setopt($ch, CURLOPT_USERPWD, "$this->_htUser:$this->_htPassword");
-//                    curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-//                }
+
                 curl_exec($ch);
                 $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 curl_close($ch);
