@@ -40,9 +40,11 @@ class SaveConfig implements ObserverInterface
         $apiUser = $this->settings->getApiUser();
         $apiPassword = $this->settings->getApiPassword();
 
-        $this->cobbyApi->registerShop($apiUser, $apiPassword);
+        if ($this->settings->getCobbyActive()) {
+            $this->cobbyApi->registerShop($apiUser, $apiPassword);
 
-        $this->messageManager->addSuccess(self::SUCCESS_MESSAGE);
+            $this->messageManager->addSuccess(self::SUCCESS_MESSAGE);
+        }
 
         //TODO: INdex auf process setzen ?
 //        Mage::getSingleton('index/indexer')

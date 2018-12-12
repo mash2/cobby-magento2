@@ -3,6 +3,7 @@
     <default>
         <cobby>
             <settings>
+                <active>1</active>
                 <choose_user>0</choose_user>
                 <license_key>cobby license key</license_key>
                 <overwrite_images>0</overwrite_images>

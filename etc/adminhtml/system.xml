@@ -16,6 +16,11 @@
             <group id="settings" translate="label" type="text" sortOrder="100" showInDefault="1">
                 <label>General Settings</label>
                 <attribute type="expanded">1</attribute>
+                <field id="active" translate="label tooltip" type="select" sortOrder="1" showInDefault="1">
+                    <label>Active</label>
+                    <tooltip>Activate or deactivate cobby module</tooltip>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
                 <field id="license_key" translate="label tooltip" type="text" sortOrder="10" showInDefault="1">
                     <label>License key</label>
                     <tooltip>The license key will be sent via email.</tooltip>

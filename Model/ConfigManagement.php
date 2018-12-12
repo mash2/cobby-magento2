@@ -2,6 +2,10 @@
 namespace Mash2\Cobby\Model;
 
 
+/**
+ * Class ConfigManagement
+ * @package Mash2\Cobby\Model
+ */
 class ConfigManagement implements \Mash2\Cobby\Api\ConfigManagementInterface
 {
     const EE = 'Enterprise';
@@ -44,23 +48,31 @@ class ConfigManagement implements \Mash2\Cobby\Api\ConfigManagementInterface
      */
     private $productMetadata;
 
+    private $settings;
+
+    private $jsonHelper;
+
     /**
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Backend\Model\UrlInterface $backendUrl
      * @param \Magento\Framework\App\ProductMetadataInterface $productMetadata
+     * @param \Mash2\Cobby\Helper\Settings $settings
      */
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Backend\Model\UrlInterface $backendUrl,
-        \Magento\Framework\App\ProductMetadataInterface $productMetadata
-
+        \Magento\Framework\App\ProductMetadataInterface $productMetadata,
+        \Magento\Framework\Json\Helper\Data $jsonHelper,
+        \Mash2\Cobby\Helper\Settings $settings
     ) {
+        $this->jsonHelper       = $jsonHelper;
         $this->scopeConfig      = $scopeConfig;
         $this->storeManager     = $storeManager;
         $this->backendUrl       = $backendUrl;
         $this->productMetadata  = $productMetadata;
+        $this->settings         = $settings;
     }
 
     public function getList()
@@ -89,6 +101,23 @@ class ConfigManagement implements \Mash2\Cobby\Api\ConfigManagementInterface
             
             $result[] = $storeConfigs;
         }
+
+        return $result;
+    }
+
+    public function active($jsonData)
+    {
+        $result = array();
+        $data = $this->jsonHelper->jsonDecode($jsonData);
+        $value = 0;
+
+        if ($data['active'] == "true") {
+            $value = 1;
+        }
+
+        $this->settings->setCobbyActive($value);
+
+        $result[] = $data;
 
         return $result;
     }

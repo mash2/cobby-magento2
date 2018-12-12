@@ -12,4 +12,11 @@ interface ConfigManagementInterface
      * @return mixed
      */
     public function getList();
+
+    /**
+     * @api
+     * @param string $jsonData
+     * @return bool
+     */
+    public function active($jsonData);
 }

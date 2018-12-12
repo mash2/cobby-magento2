@@ -105,6 +105,9 @@ class Queue extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function enqueueAndNotify($entity, $action, $ids, $transactionId = null)
     {
+        if (!$this->cobbySettings->isCobbyEnabled()) {
+            return;
+        }
         if ($this->registry->registry('is_cobby_import') == 1) { //do nothing if is cobby import
             return;
         }
