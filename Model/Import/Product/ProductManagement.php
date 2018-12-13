@@ -267,7 +267,7 @@ class ProductManagement extends AbstractManagement// \Magento\CatalogImportExpor
 
         $productIds = array();
         $skus = array();
-        $data = $rows;
+        $data = array('rows' => $rows);
 
         foreach ($rows as $row) {
             if (isset($row[self::COL_PRODUCT_ID])) {
@@ -288,7 +288,10 @@ class ProductManagement extends AbstractManagement// \Magento\CatalogImportExpor
             $this->eventManager->dispatch('cobby_import_product_import_before', array(
                 'transport' => $transportObject));
 
-            $this->saveProducts($rows, $transactionId);
+            $transportData = $transportObject->getData();
+            $transportRows = $transportData['rows'];
+
+            $this->saveProducts($transportRows, $transactionId);
 
             $this->eventManager->dispatch('cobby_import_product_import_after', array('transport' => $transportObject));
         }
