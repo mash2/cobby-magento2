@@ -81,10 +81,7 @@
 
             <group id="troubleshooter" translate="label" type="text" sortOrder="500" showInDefault="1">
                 <label>Troubleshooter</label>
-                <field id="test_runner" translate="label" type="button" sortOrder="10" showInDefault="1">
-                    <frontend_model>Mash2\Cobby\Block\System\Config\Troubleshooter</frontend_model>
-                    <label>Run tests</label>
-                </field>
+                <frontend_model>Mash2\Cobby\Block\System\Config\Troubleshooter</frontend_model>
             </group>
 
             <group id="version" translate="label" type="text" sortOrder="600" showInDefault="1">
