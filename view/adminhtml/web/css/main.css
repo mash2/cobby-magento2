@@ -1,11 +1,11 @@
-#cobby_troubleshooter .red{
+#cobby_troubleshooter .error{
     color: red;
 }
 
-#cobby_troubleshooter .green{
+#cobby_troubleshooter .ok{
     color: green;
 }
 
-#cobby_troubleshooter .yellow{
-    color: yellow;
+#cobby_troubleshooter .exception{
+    color: orange;
 }

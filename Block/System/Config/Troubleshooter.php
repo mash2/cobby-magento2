@@ -8,10 +8,6 @@ use Magento\Framework\Data\Form\Element\AbstractElement;
 use Magento\Framework\View\Helper\Js;
 use Magento\Backend\Model\Auth\Session;
 use Magento\Framework\View\LayoutFactory;
-use Magento\Cron\Model\ResourceModel\Schedule\CollectionFactory;
-use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\App\State;
-use mysql_xdevapi\Exception;
 use Magento\Backend\Model\UrlInterface;
 use Mash2\Cobby\Helper\Settings;
 
@@ -21,10 +17,17 @@ use Mash2\Cobby\Helper\Settings;
  */
 class Troubleshooter extends Fieldset
 {
-    const PHP_MIN_VERSION = "7.0";
+    const PHP_MIN_VERSION = '7.0';
+    const MIN_MEMORY = 512;
     const VERSION_TO_LOW = 'Your php version has to be bigger than: ';
     const MEMORY_TO_LOW = 'Your memory has to be more then: ';
-    const API_ROUTE = 'index.php/rest';
+    const API_ROUTE = 'index.php/rest/V1/integration/admin/token';
+    const OK = 0;
+    const ERROR = 1;
+    const EXCEPTION = -1;
+    const NO_DATA = 'It seems like you have no login data, enter your credentials and hit "Save Config"';
+    const LOGIN_FAILED = 'It seems like your login data is incorrect, check your credentials';
+    const LOGIN_SUCCEED = 'Login data is set up correctly';
 
     /**
      * @var \Magento\Framework\View\LayoutFactory
@@ -61,7 +64,6 @@ class Troubleshooter extends Fieldset
     }
 
     /**
-     * Remove scope label
      *
      * @param  AbstractElement $element
      * @return string
@@ -72,7 +74,7 @@ class Troubleshooter extends Fieldset
 
         $html .= $this->getPhpVersion($element);
         $html .= $this->getMemory($element);
-        //$html .= $this->checkCredentials($element);
+        $html .= $this->checkCredentials($element);
 
         $html .= $this->_getFooterHtml($element);
 
@@ -82,100 +84,84 @@ class Troubleshooter extends Fieldset
     private function getPhpVersion($fieldset)
     {
         $label = __("Php Version");
-        $version = '';
-        $error = false;
+        $hint = '';
 
         try {
-            $version = phpversion();
+            //$value = phpversion();
+            $value = '5.6';
+            if (version_compare($value, self::PHP_MIN_VERSION, '>=')) {
+                $code = self::OK;
+            } else {
+                $code = self::ERROR;
+                $value = self::VERSION_TO_LOW . $value;
+                $hint = 'https://help.cobby.io';
+            }
         } catch (Exception $e) {
-            $error = true;
-            $errorMsg = $e->getMessage();
+            $code = self::EXCEPTION;
+            $value = $e->getMessage();
+            $hint = 'https://help.cobby.io';
         }
 
-        if ($error) {
-            $value = '<div class="yellow">';
-            $value .= $errorMsg . "</div>";
-        } else if (version_compare($version, self::PHP_MIN_VERSION, '>=')) {
-            $value = '<div class="green">';
-            $value .= $version . __(' OK') . "</div>";
-        } else {
-            $value = '<div class="red">';
-            $value .= __(self::VERSION_TO_LOW) . $version;
-            $value .=
-                "<a target='_blank'
-                  href='https://help.cobby.io'>" .
-                __("Get help") .
-                "</a>" . "</div>";
-        }
+        $fieldValue = $this->htmlBuilder($value, $code, $hint);
 
-        return $this->getFieldHtml($fieldset, 'phpversion', $label, $value);
+        return $this->getFieldHtml($fieldset, 'phpversion', $label, $fieldValue);
     }
 
     private function getMemory($fieldset)
     {
         $label = __("Memory");
-        $error = false;
-
+        $hint = '';
 
         try {
-            $memory = ini_get('memory_limit');
+            //$value = ini_get('memory_limit');
+            $value = '256M';
+            if ((int)$value >= self::MIN_MEMORY) {
+                $code = self::OK;
+            } else {
+                $code = self::ERROR;
+                $value = self::MEMORY_TO_LOW . $value;
+                $hint = 'https://help.cobby.io';
+            }
         } catch (Exception $e) {
-            $error = true;
-            $errorMsg = $e->getMessage();
+            $code = self::EXCEPTION;
+            $value = $e->getMessage();
+            $hint = 'https://help.cobby.io';
         }
 
-        if ($error) {
-            $value = '<div class="yellow">';
-            $value .= $errorMsg . "</div>";
-        } else if ((int)$memory >= 512) {
-            $value = '<div class="green">';
-            $value .= $memory . __(' OK') . "</div>";
-        } else {
-            $value = '<div class="red">';
-            $value .= __(self::MEMORY_TO_LOW) . $memory;
-            $value .=
-                "<a target='_blank'
-                  href='https://help.cobby.io'>" .
-                __("Get help") .
-                "</a>" . "</div>";
-        }
+        $fieldValue = $this->htmlBuilder($value, $code, $hint);
 
-        return $this->getFieldHtml($fieldset, 'memory', $label, $value);
-    }
-
-    private function htmlBuilder($value, $code, $hint)
-    {
-        $result = '';
-        switch ($code) {
-            case self::ERROR:
-                $value = '<div class="yellow">';
-                $value .= $value . "</div>";
-                break;
-            case self::EXCEPTION:
-                $value = '<div class="red">';
-                $value .= __(self::MEMORY_TO_LOW) . $value;
-                $value .=
-                    "<a target='_blank'
-                  href='https://help.cobby.io'>" .
-                    __("Get help") .
-                    "</a>" . "</div>";
-                break;
-            case self::OK:
-                $value = '<div class="green">';
-                $value .= $value . __(' OK') . "</div>";
-                break;
-        }
-
-        return $result;
+        return $this->getFieldHtml($fieldset, 'memory', $label, $fieldValue);
     }
 
     private function checkCredentials($fieldset)
     {
+        $label = __('Credentials');
+        $hint = '';
+
         $url = $this->getApiUrl();
         $data = $this->_getLoginData();
-        $login = $this->_login($url, $data);
+        //$data = false;
 
-        return $login;
+        if ($data) {
+            //$login = $this->_login($url, $data);
+            $login = false;
+            if ($login) {
+                $code = self::OK;
+                $value = self::LOGIN_SUCCEED;
+            } else {
+                $code = self::ERROR;
+                $value = self::LOGIN_FAILED;
+                $hint = 'https://help.cobby.io';
+            }
+        } else {
+            $code = self::EXCEPTION;
+            $value = self::NO_DATA;
+            $hint = 'https://help.cobby.io';
+        }
+
+        $fieldValue = $this->htmlBuilder($value, $code, $hint);
+
+        return $this->getFieldHtml($fieldset, 'credits', $label, $fieldValue);
     }
 
     private function getApiUrl()
@@ -192,13 +178,17 @@ class Troubleshooter extends Fieldset
         $apiUserName = $this->settings->getApiUser();
         $apiKey = $this->settings->getApiPassword();
 
-        $data = array(
-            "method" => "login",
-            "params" => array($apiUserName, $apiKey),
-            "id" => "id"
-        );
+        if ($apiUserName && $apiKey) {
+            $data = array(
+                "username" => $apiUserName,
+                "password" => $apiKey
+            );
 
-        return json_encode($data);
+            return json_encode($data);
+        }
+
+        return false;
+
     }
 
     protected function _login($url, $data)
@@ -207,6 +197,7 @@ class Troubleshooter extends Fieldset
             try {
                 $ch = curl_init($url);
                 curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
                 curl_setopt($ch, CURLOPT_VERBOSE, 1);
@@ -217,9 +208,8 @@ class Troubleshooter extends Fieldset
 
                 $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
                 //$header = substr($response, 0, $header_size);
-                $body = json_decode(substr($response, $header_size));
+                $token = json_decode(substr($response, $header_size));
 
-                $token = $body->result;
                 curl_close($ch);
 
                 if ($http_code !== 200) {
@@ -230,6 +220,8 @@ class Troubleshooter extends Fieldset
                     return true;
                 }
 
+                return false;
+
                 $errorMsg = $body->error->message;
                 $error = array('401' => $errorMsg);
                 return $error;
@@ -237,13 +229,43 @@ class Troubleshooter extends Fieldset
                 $msg = $e->getMessage();
                 $error = array('400' => $msg);
 
-                return  $error;
+                return false;
             }
         }
+
+        return false;
 
         return 'Not a valid url';
     }
 
+    private function htmlBuilder($value, $code, $hint)
+    {
+        $result = '';
+        $link = "<a target='_blank'
+                  href=$hint>" .
+            __("Get help") .
+            "</a>" . "</div>";
+
+        switch ($code) {
+            case self::ERROR:
+                $result = '<div class="error">';
+                $result .= $value."</div>";
+                $result .= $link;
+                break;
+            case self::EXCEPTION:
+                $result = '<div class="exception">';
+                $result .= $value. "</div>";
+                $result .= $link;
+                break;
+            case self::OK:
+                $result = '<div>';
+                $result .= $value;
+                $result .= '<div class="ok">' . __(' OK') . "</div></div>";
+                break;
+        }
+
+        return $result;
+    }
 
     private function _getFieldRenderer()
     {
