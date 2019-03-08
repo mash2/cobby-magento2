@@ -69,58 +69,72 @@ class SystemCheck extends Fieldset
 
     private function getPhpVersion($fieldset)
     {
-        $label = __("Php Version");
-
         $sectionValue = $this->systemCheckHelper->getElement(self::PHP_VERSION);
+        $icon = $this->getIcon($sectionValue[SystemCheckHelper::CODE]);
+        $label = $icon. __(" Php Version");;
 
         $fieldValue = $this->htmlBuilder($sectionValue);
 
         return $this->getFieldHtml($fieldset, 'phpversion', $label, $fieldValue);
     }
 
+    private function getIcon($code)
+    {
+        $ret = '<img src="/pub/errors/default/images/';
+
+        switch ($code) {
+            case SystemCheckHelper::OK:
+                $ret .= 'i_msg-success.gif">';
+                break;
+            case SystemCheckHelper::ERROR:
+                $ret .= 'i_msg-error.gif">';
+                break;
+            case SystemCheckHelper::EXCEPTION:
+                $ret .= 'i_msg-note.gif">';
+                break;
+        }
+
+        return $ret;
+    }
+
     private function getMemory($fieldset)
     {
-        $label = __("Memory");
-
         $sectionValue = $this->systemCheckHelper->getElement(self::MEMORY);
+        $icon = $this->getIcon($sectionValue[SystemCheckHelper::CODE]);
+        $label = $icon . __(" Memory");
 
         $fieldValue = $this->htmlBuilder($sectionValue);
 
-        return $this->getFieldHtml($fieldset, 'memory', $label, $fieldValue);
+        return $this->getFieldHtml($fieldset, 'memory', $label, $fieldValue, $icon);
     }
 
     private function checkCredentials($fieldset)
     {
-        $label = __('Credentials');
-
         $sectionValue = $this->systemCheckHelper->getElement(self::CREDENTIALS);
+        $icon = $this->getIcon($sectionValue[SystemCheckHelper::CODE]);
+        $label = $icon . __(' Credentials');
 
         $fieldValue = $this->htmlBuilder($sectionValue);
 
-        return $this->getFieldHtml($fieldset, 'credits', $label, $fieldValue);
+        return $this->getFieldHtml($fieldset, 'credits', $label, $fieldValue, $icon);
     }
 
     private function htmlBuilder($sectionValue)
     {
-        $result = '';
         $value = $sectionValue[SystemCheckHelper::VALUE];
         $code = $sectionValue[SystemCheckHelper::CODE];
         $url = $sectionValue[SystemCheckHelper::LINK];
-        $link = "<a target='_blank'href=$url>" . __("Get help") . "</a>" . "</div>";
+        $link = "<div class='tooltip'><span class='help'><a target='_blank'href=$url></a></span></div>";
 
         switch ($code) {
             case SystemCheckHelper::ERROR:
-                $result = '<div class="error">';
-                $result .= $value."</div>";
-                $result .= $link;
+                $result = '<div class="error">' . $value. $link . '</div>';
                 break;
             case SystemCheckHelper::EXCEPTION:
-                $result = '<div class="exception">';
-                $result .= $value. "</div>";
-                $result .= $link;
+                $result = '<div class="exception">' . $value . $link . '</div>';
                 break;
             case SystemCheckHelper::OK:
-                $result = '<div class="ok">' . $value . "</div></div>";
+                $result = '<div class="ok">' . $value . '</div>';
                 break;
         }
 
@@ -145,6 +159,7 @@ class SystemCheck extends Fieldset
      * @param string $fieldName
      * @param string $label
      * @param string $value
+     * @param string $icon
      * @return string
      */
     private function getFieldHtml($fieldset, $fieldName, $label = '', $value = '')

@@ -1,11 +1,11 @@
-#cobby_troubleshooter .error{
+#cobby_systemcheck .error{
     color: red;
 }
 
-#cobby_troubleshooter .ok{
+#cobby_systemcheck .ok{
     color: green;
 }
 
-#cobby_troubleshooter .exception{
+#cobby_systemcheck .exception{
     color: orange;
 }
