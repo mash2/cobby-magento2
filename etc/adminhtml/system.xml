@@ -79,9 +79,11 @@
                 </field>
             </group>
 
-            <group id="troubleshooter" translate="label" type="text" sortOrder="500" showInDefault="1">
-                <label>Troubleshooter</label>
-                <frontend_model>Mash2\Cobby\Block\System\Config\Troubleshooter</frontend_model>
+            <group id="systemcheck" translate="label comment" type="text" sortOrder="500" showInDefault="1">
+                <label>System check</label>
+                <attribute type="expanded">1</attribute>
+                <comment>This is a system check, if you run into problems check here</comment>
+                <frontend_model>Mash2\Cobby\Block\System\Config\SystemCheck</frontend_model>
             </group>
 
             <group id="version" translate="label" type="text" sortOrder="600" showInDefault="1">
