@@ -19,7 +19,7 @@ class ConfigManagement implements \Mash2\Cobby\Api\ConfigManagementInterface
 		'cataloginventory/item_options/manage_stock',
         'cataloginventory/item_options/backorders',
         'cataloginventory/item_options/min_qty',
-        \Mash2\Cobby\Helper\Settings::XML_PATH_COBBY_SETTINGS_MANAGE_STOCK
+        \Mash2\Cobby\Helper\Settings::XML_PATH_COBBY_SETTINGS_MANAGE_STOCK,
     ];
 
     /**
@@ -55,7 +55,6 @@ class ConfigManagement implements \Mash2\Cobby\Api\ConfigManagementInterface
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Backend\Model\UrlInterface $backendUrl,
         \Magento\Framework\App\ProductMetadataInterface $productMetadata
-
     ) {
         $this->scopeConfig      = $scopeConfig;
         $this->storeManager     = $storeManager;
@@ -91,5 +90,11 @@ class ConfigManagement implements \Mash2\Cobby\Api\ConfigManagementInterface
         }
 
         return $result;
+    }
+
+    public function ping()
+    {
+
+        return 'ping';
     }
 }

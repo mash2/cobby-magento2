@@ -12,4 +12,11 @@ interface ConfigManagementInterface
      * @return mixed
      */
     public function getList();
+
+    /**
+     *
+     * @api
+     * @return mixed
+     */
+    public function ping();
 }

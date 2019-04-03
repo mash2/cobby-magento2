@@ -249,4 +249,34 @@
             <resource ref="Mash2_Cobby::cobby"/>
         </resources>
     </route>
+
+    <!-- Ping -->
+    <route url="V1/cobby/ping" method="POST">
+        <service class="Mash2\Cobby\Api\ConfigManagementInterface" method="ping"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <route url="V1/cobby/ping" method="PUT">
+        <service class="Mash2\Cobby\Api\ConfigManagementInterface" method="ping"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <route url="V1/cobby/ping" method="GET">
+        <service class="Mash2\Cobby\Api\ConfigManagementInterface" method="ping"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <route url="V1/cobby/ping" method="DELETE">
+        <service class="Mash2\Cobby\Api\ConfigManagementInterface" method="ping"/>
+        <resources>
+            <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
 </routes>
