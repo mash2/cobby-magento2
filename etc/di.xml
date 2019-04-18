@@ -23,6 +23,7 @@
     <preference for="Mash2\Cobby\Api\GroupRepositoryInterface" type="Mash2\Cobby\Model\GroupRepository" />
     <preference for="Mash2\Cobby\Api\WebsiteRepositoryInterface" type="Mash2\Cobby\Model\WebsiteRepository" />
     <preference for="Mash2\Cobby\Api\CategoryRepositoryInterface" type="Mash2\Cobby\Model\CategoryRepository" />
+    <preference for="Mash2\Cobby\Api\InventorySourceRepositoryInterface" type="Mash2\Cobby\Model\InventorySourceRepository" />
 
     <preference for="Mash2\Cobby\Api\ImportProductLinkManagementInterface" type="Mash2\Cobby\Model\Import\Product\LinkManagement" />
     <preference for="Mash2\Cobby\Api\ImportProductCategoryManagementInterface" type="Mash2\Cobby\Model\Import\Product\CategoryManagement" />

@@ -165,6 +165,13 @@
         </resources>
     </route>
 
+    <route url="/V1/cobby/export/inventory/sources" method="GET">
+        <service class="Mash2\Cobby\Api\InventorySourceRepositoryInterface" method="export" />
+        <resources>
+            <resource ref="Mash2_Cobby::cobby" />
+        </resources>
+    </route>
+
     <!-- Import -->
     <route url="/V1/cobby/import/products" method="POST">
         <service class="Mash2\Cobby\Api\ImportInterface" method="importProducts"/>
