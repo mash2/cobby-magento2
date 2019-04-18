@@ -38,6 +38,8 @@ class ProductManagement extends AbstractManagement// \Magento\CatalogImportExpor
 
     const USED_SKUS = 'used_skus';
 
+    const ROWS = 'rows';
+
     /**
      * Dry-runned products information from import file.
      *
@@ -267,7 +269,13 @@ class ProductManagement extends AbstractManagement// \Magento\CatalogImportExpor
 
         $productIds = array();
         $skus = array();
-        $data = array('rows' => $rows);
+        $data = array(
+            self::ROWS          => array(),
+            self::TYPE_MODELS   => array(),
+            self::USED_SKUS     => array()
+            );
+
+        $data[self::ROWS] = $rows;
 
         foreach ($rows as $row) {
             if (isset($row[self::COL_PRODUCT_ID])) {
@@ -289,7 +297,7 @@ class ProductManagement extends AbstractManagement// \Magento\CatalogImportExpor
                 'transport' => $transportObject));
 
             $transportData = $transportObject->getData();
-            $transportRows = $transportData['rows'];
+            $transportRows = $transportData[self::ROWS];
 
             $this->saveProducts($transportRows, $transactionId);
 
