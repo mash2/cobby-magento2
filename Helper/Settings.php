@@ -5,22 +5,25 @@
  */
 namespace Mash2\Cobby\Helper;
 
+use Magento\Config\Model\ResourceModel\Config;
+
 class Settings extends \Magento\Framework\App\Helper\AbstractHelper
 {
     const XML_PATH_PRODUCT_CATEGORY_POSITION    = 'cobby/settings/product_category_position';
     const XML_PATH_LICENSE_KEY                  = 'cobby/settings/license_key';
     const XML_PATH_COBBY_VERSION                = 'cobby/settings/cobby_version';
-    const XML_PATH_COBBY_HTACCESS_PASSWORD      = 'cobby/htaccess/password';
-    const XML_PATH_COBBY_HTACCESS_USER          = 'cobby/htaccess/user';
     const XML_PATH_COBBY_SETTINGS_CONTACT_EMAIL = 'cobby/settings/contact_email';
     const XML_PATH_COBBY_SETTINGS_API_USER      = 'cobby/settings/api_user';
     const XML_PATH_COBBY_SETTINGS_API_PASSWORD  = 'cobby/settings/api_key';
     const XML_PATH_COBBY_SETTINGS_MANAGE_STOCK  = 'cobby/stock/manage';
     const XML_PATH_COBBY_SETTINGS_AVAILABILITY  = 'cobby/stock/availability';
     const XML_PATH_COBBY_SETTINGS_QUANTITY      = 'cobby/stock/quantity';
+    const XML_PATH_COBBY_SETTINGS_ACTIVE        = 'cobby/settings/active';
     const MANAGE_STOCK_ENABLED                  = 0;
     const MANAGE_STOCK_READONLY                 = 1;
     const MANAGE_STOCK_DISABLED                 = 2;
+    const MODULE_ENABLED                        = 0;
+    const MODULE_DISABLED                       = 1;
 
     /**
      * @var \Magento\Store\Model\StoreManagerInterface
@@ -32,6 +35,8 @@ class Settings extends \Magento\Framework\App\Helper\AbstractHelper
      */
     protected $encryptor;
 
+    protected $config;
+
     /**
      * constructor.
      * @param \Magento\Framework\App\Helper\Context $context
@@ -41,11 +46,13 @@ class Settings extends \Magento\Framework\App\Helper\AbstractHelper
     public function __construct(
         \Magento\Framework\App\Helper\Context $context,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Framework\Encryption\EncryptorInterface $encryptor
+        \Magento\Framework\Encryption\EncryptorInterface $encryptor,
+        Config $config
     ) {
         parent::__construct($context);
         $this->storeManager = $storeManager;
         $this->encryptor = $encryptor;
+        $this->config = $config;
     }
 
     /**
@@ -90,6 +97,36 @@ class Settings extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->scopeConfig->getValue(self::XML_PATH_COBBY_VERSION);
     }
 
+    public function isCobbyEnabled()
+    {
+        $enabled = $this->getCobbyActive();
+        $apiUser = $this->getApiUser();
+        $license = $this->getLicenseKey();
+
+        if ($enabled && isset($apiUser) && isset($license)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public function setCobbyActive($value)
+    {
+        $this->config->saveConfig(self::XML_PATH_COBBY_SETTINGS_ACTIVE, $value);
+        return true;
+    }
+
+    public function getCobbyActive()
+    {
+        $status = $this->scopeConfig->getValue(self::XML_PATH_COBBY_SETTINGS_ACTIVE);
+
+        if($status === "0") {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     /**
      * Get contact e-mail
      *
@@ -128,30 +165,6 @@ class Settings extends \Magento\Framework\App\Helper\AbstractHelper
     public function getDefaultQuantity()
     {
         return $this->scopeConfig->getValue(self::XML_PATH_COBBY_SETTINGS_QUANTITY);
-    }
-
-    /**
-     * Get htaccess user
-     *
-     * @return string
-     */
-    public function getHtaccessUser()
-    {
-        return $this->scopeConfig->getValue(self::XML_PATH_COBBY_HTACCESS_USER);
-    }
-
-    /**
-     * Get htaccess password
-     *
-     * @return string
-     */
-    public function getHtaccessPassword()
-    {
-        $password = $this->scopeConfig->getValue(self::XML_PATH_COBBY_HTACCESS_PASSWORD);
-        if (empty($password) || empty($this->getHtaccessUser())) {
-            return '';
-        }
-        return $this->encryptor->decrypt($password);
     }
 
     /**

@@ -100,8 +100,6 @@ class CobbyApi extends \Magento\Framework\App\Helper\AbstractHelper
         $request['ApiUser'] = $apiUser;
         $request['ApiKey'] = $apiPassword;
         $request['ContactEmail'] = $this->settings->getContactEmail();
-        $request['HtaccessUser'] = $this->settings->getHtaccessUser();
-        $request['HtaccessPassword'] = $this->settings->getHtaccessPassword();
         $request['MagentoVersion'] = $this->productMetadata->getVersion();
 
         //TODO: Validate response

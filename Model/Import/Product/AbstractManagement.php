@@ -3,6 +3,12 @@ namespace Mash2\Cobby\Model\Import\Product;
 
 abstract class AbstractManagement extends \Mash2\Cobby\Model\Import\AbstractEntity
 {
+    const OBJECT_STATE = 'object_state';
+    const ADDED = 'Added';
+    const DELETED = 'Deleted';
+    const UPDATED = 'Updated';
+    const NONE = 'None';
+
     /**
      * @var \Magento\Framework\App\ResourceConnection
      */

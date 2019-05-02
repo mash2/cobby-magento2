@@ -38,6 +38,8 @@ class ProductManagement extends AbstractManagement// \Magento\CatalogImportExpor
 
     const USED_SKUS = 'used_skus';
 
+    const ROWS = 'rows';
+
     /**
      * Dry-runned products information from import file.
      *
@@ -267,7 +269,13 @@ class ProductManagement extends AbstractManagement// \Magento\CatalogImportExpor
 
         $productIds = array();
         $skus = array();
-        $data = $rows;
+        $data = array(
+            self::ROWS          => array(),
+            self::TYPE_MODELS   => array(),
+            self::USED_SKUS     => array()
+            );
+
+        $data[self::ROWS] = $rows;
 
         foreach ($rows as $row) {
             if (isset($row[self::COL_PRODUCT_ID])) {
@@ -288,7 +296,10 @@ class ProductManagement extends AbstractManagement// \Magento\CatalogImportExpor
             $this->eventManager->dispatch('cobby_import_product_import_before', array(
                 'transport' => $transportObject));
 
-            $this->saveProducts($rows, $transactionId);
+            $transportData = $transportObject->getData();
+            $transportRows = $transportData[self::ROWS];
+
+            $this->saveProducts($transportRows, $transactionId);
 
             $this->eventManager->dispatch('cobby_import_product_import_after', array('transport' => $transportObject));
         }

@@ -1,0 +1,11 @@
+#cobby_systemcheck .error{
+    color: red;
+}
+
+#cobby_systemcheck .ok{
+    color: green;
+}
+
+#cobby_systemcheck .exception{
+    color: orange;
+}

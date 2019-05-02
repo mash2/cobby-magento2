@@ -50,6 +50,12 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
 
     private $cobbySettings;
 
+    private $commandAppend;
+
+    private $commandDelete;
+
+    private $productMetadata;
+
     /**
      * StockManagement constructor.
      * @param \Magento\Framework\App\ResourceConnection $resourceModel
@@ -71,12 +77,14 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         \Magento\CatalogInventory\Api\StockConfigurationInterface $stockConfiguration,
         \Magento\CatalogInventory\Model\Spi\StockStateProviderInterface $stockStateProvider,
         \Mash2\Cobby\Helper\Settings $cobbySettings,
-        \Mash2\Cobby\Model\Product $product
+        \Mash2\Cobby\Model\Product $product,
+        \Magento\Framework\App\ProductMetadata $productMetadata
     ) {
         $this->stockRegistry = $stockRegistry;
         $this->stockConfiguration = $stockConfiguration;
         $this->stockStateProvider = $stockStateProvider;
         $this->cobbySettings = $cobbySettings;
+        $this->productMetadata = $productMetadata;
         parent::__construct($resourceModel, $productCollectionFactory, $eventManager, $resourceHelper, $product);
     }
 
@@ -96,7 +104,14 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         $entityTable = $this->resourceModel->getTableName('cataloginventory_stock_item');
         $stockItems = array();
 
+        $inventorySourceAppendItems = array();
+        $inventorySourceDeleteItems = array();
+
+        $multiSources = version_compare($this->productMetadata->getVersion(), "2.3.0", ">=");
+
         foreach ($rows as $row) {
+            $sku = $row['sku'];
+            unset($row['sku']);
             $productId = $row['product_id'];
             unset($row['product_id']);
 
@@ -104,8 +119,22 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                 continue;
             }
 
+            if (!empty($row['inventory_sources']) && $multiSources) {
+
+                foreach( $row['inventory_sources'] as $inventorySource ) {
+                    if($inventorySource[self::OBJECT_STATE] == self::DELETED ) {
+                        $inventorySourceDeleteItems[] = $inventorySource;
+                    } else {
+                        $inventorySourceAppendItems[] = $inventorySource;
+                    }
+                }
+            }
+
+            unset($row['inventory_sources']);
+
             $websiteId = $this->stockConfiguration->getDefaultScopeId();
             $stockData = array(
+
                 'product_id' => $productId,
                 'website_id' => $websiteId,
             );
@@ -126,6 +155,7 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                         $manageStock == \Mash2\Cobby\Helper\Settings::MANAGE_STOCK_DISABLED) &&
                         !$existStockData){
                 $defaultStock = array();
+
                 $defaultStock['qty'] = $defaultQuantity;
                 $defaultStock['is_in_stock'] = $defaultAvailability;
 
@@ -134,23 +164,44 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
                     $this->defaultStockData,
                     $defaultStock
                 );
+
+                if ($multiSources) {
+                    $defaultSource = array(
+                        'source_code' => 'default',
+                        'quantity' => $defaultQuantity,
+                        'status' => $defaultAvailability,
+                        'sku'   => $sku
+                    );
+
+                    $inventorySourceAppendItems[] = $defaultSource;
+                }
             }
 
             $stockItemDo->setData($stockData);
 
-            //TODO: M2
-//            if ($this->stockConfiguration->isQty($row['product_type'])) {
-//
-//            }
-
             $stockItems[] = $stockItemDo->getData();
-
         }
 
             // Insert rows
         if (!empty($stockItems)) {
             $this->connection->insertOnDuplicate($entityTable, array_values($stockItems));
             $this->touchProducts($existingProductIds);
+        }
+
+        if (!empty($inventorySourceAppendItems)) {
+            //"This code needs porting or exist for backward compatibility purposes."
+            //(https://devdocs.magento.com/guides/v2.2/extension-dev-guide/object-manager.html)
+            $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+            $this->commandAppend = $objectManager->create('Magento\InventoryImportExport\Model\Import\Command\Append');
+            $this->commandAppend->execute($inventorySourceAppendItems);
+        }
+
+        if (!empty($inventorySourceDeleteItems)) {
+            //"This code needs porting or exist for backward compatibility purposes."
+            //(https://devdocs.magento.com/guides/v2.2/extension-dev-guide/object-manager.html)
+            $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+            $this->commandDelete = $objectManager->create('Magento\InventoryImportExport\Model\Import\Command\Delete');
+            $this->commandDelete->execute($inventorySourceDeleteItems);
         }
 
         $this->eventManager->dispatch('cobby_import_product_stock_import_after', array( 'products' => $productIds ));

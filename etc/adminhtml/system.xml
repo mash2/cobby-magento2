@@ -16,6 +16,11 @@
             <group id="settings" translate="label" type="text" sortOrder="100" showInDefault="1">
                 <label>General Settings</label>
                 <attribute type="expanded">1</attribute>
+                <field id="active" translate="label tooltip" type="select" sortOrder="1" showInDefault="1">
+                    <label>Active</label>
+                    <tooltip>Activate or deactivate cobby module</tooltip>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
                 <field id="license_key" translate="label tooltip" type="text" sortOrder="10" showInDefault="1">
                     <label>License key</label>
                     <tooltip>The license key will be sent via email.</tooltip>
@@ -68,16 +73,6 @@
                 </field>
             </group>
 
-            <group id="htaccess" translate="label" type="text" sortOrder="300" showInDefault="1">
-                <label>.htaccess</label>
-                <field id="user" translate="label" type="text" sortOrder="20" showInDefault="1">
-                    <label>.htaccess user</label>
-                </field>
-                <field id="password" translate="label" type="obscure" sortOrder="30" showInDefault="1">
-                    <label>.htaccess password</label>
-                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
-                </field>
-            </group>
 
             <group id="advanced" translate="label" type="text" sortOrder="400" showInDefault="1">
                 <label>Advanced</label>
@@ -89,7 +84,14 @@
                 </field>
             </group>
 
-            <group id="version" translate="label" type="text" sortOrder="500" showInDefault="1">
+            <group id="systemcheck" translate="label comment" type="text" sortOrder="500" showInDefault="1">
+                <label>System check</label>
+                <attribute type="expanded">1</attribute>
+                <comment>This is a system check, if you run into problems check here</comment>
+                <frontend_model>Mash2\Cobby\Block\System\Config\Systemcheck</frontend_model>
+            </group>
+
+            <group id="version" translate="label" type="text" sortOrder="600" showInDefault="1">
                 <attribute type="expanded">1</attribute>
                 <field id="version" translate="label" type="label" showInDefault="1">
                     <label>cobby Version</label>

@@ -97,6 +97,13 @@
         </resources>
     </route>
 
+    <route url="/V1/cobby/configs/active" method="POST">
+        <service class="Mash2\Cobby\Api\ConfigManagementInterface" method="active" />
+        <resources>
+            <resource ref="Mash2_Cobby::cobby" />
+        </resources>
+    </route>
+
     <!-- CustomerGroup -->
     <route url="/V1/cobby/customer/groups" method="GET">
         <service class="Mash2\Cobby\Api\CustomerGroupManagementInterface" method="getList"/>
@@ -155,6 +162,13 @@
         <service class="Mash2\Cobby\Api\DebugInterface" method="export"/>
         <resources>
             <resource ref="Mash2_Cobby::cobby"/>
+        </resources>
+    </route>
+
+    <route url="/V1/cobby/export/inventory/sources" method="GET">
+        <service class="Mash2\Cobby\Api\InventorySourceRepositoryInterface" method="export" />
+        <resources>
+            <resource ref="Mash2_Cobby::cobby" />
         </resources>
     </route>
 
