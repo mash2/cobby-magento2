@@ -48,6 +48,7 @@ class ConfigManagement implements \Mash2\Cobby\Api\ConfigManagementInterface
      */
     private $productMetadata;
 
+    private $systemCheckHelper;
     private $settings;
 
     private $jsonHelper;
@@ -64,6 +65,7 @@ class ConfigManagement implements \Mash2\Cobby\Api\ConfigManagementInterface
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Backend\Model\UrlInterface $backendUrl,
         \Magento\Framework\App\ProductMetadataInterface $productMetadata,
+        \Mash2\Cobby\Helper\Systemcheck $systemCheckHelper,
         \Magento\Framework\Json\Helper\Data $jsonHelper,
         \Mash2\Cobby\Helper\Settings $settings
     ) {
@@ -72,7 +74,9 @@ class ConfigManagement implements \Mash2\Cobby\Api\ConfigManagementInterface
         $this->storeManager     = $storeManager;
         $this->backendUrl       = $backendUrl;
         $this->productMetadata  = $productMetadata;
+        $this->systemCheckHelper = $systemCheckHelper;
         $this->settings         = $settings;
+
     }
 
     public function getList()
@@ -118,6 +122,25 @@ class ConfigManagement implements \Mash2\Cobby\Api\ConfigManagementInterface
         $this->settings->setCobbyActive($value);
 
         $result[] = $data;
+
+        return $result;
+    }
+
+    public function getReport()
+    {
+        $result = array();
+
+        $testResults = $this->systemCheckHelper->getTestResults();
+
+        foreach ($testResults as $test => $testResult) {
+            $prepare = array(
+              'test' => $test,
+              'value' => $testResult['value'],
+              'code' => $testResult['code']
+            );
+
+            $result[] = $prepare;
+        }
 
         return $result;
     }

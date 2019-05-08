@@ -4,6 +4,7 @@ namespace Mash2\Cobby\Helper;
 
 use Magento\Framework\App\Helper\Context;
 use Magento\Backend\Model\UrlInterface;
+use Magento\Framework\App\MaintenanceMode;
 use Magento\Framework\HTTP\Client\Curl;
 
 class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
@@ -24,6 +25,8 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
     private $phpVersion;
     private $memory;
     private $credentials;
+    private $maintenance;
+    private $maintenanceMode;
 
     /**
      * @var \Magento\Framework\HTTP\Client\Curl
@@ -34,6 +37,7 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         Context $context,
         Settings $settings,
         UrlInterface $backendUrl,
+        MaintenanceMode $maintenanceMode,
         Curl $curl
     )
     {
@@ -42,6 +46,8 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         $this->settings = $settings;
         $this->backendUrl = $backendUrl;
         $this->_curl = $curl;
+        $this->maintenanceMode = $maintenanceMode;
+
         $this->_init();
     }
 
@@ -51,6 +57,7 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         $this->checkPhpVersion();
         $this->checkMemory();
         $this->checkCredentials();
+        $this->checkMaintenanceMode();
     }
 
     private function checkPhpVersion()
@@ -81,8 +88,7 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         $value = __('You have enough memory');
         $link = '';
         try {
-            //$memory = ini_get('memory_limit');
-            $memory = 256;
+            $memory = ini_get('memory_limit');
 
             if ((int)$memory < self::MIN_MEMORY) {
                 $code = self::ERROR;
@@ -121,6 +127,23 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $this->credentials = array(self::VALUE => $value, self::CODE => $code, self::LINK => $link);
+    }
+
+    private function checkMaintenanceMode()
+    {
+        $isOn = $this->maintenanceMode->isOn();
+
+        if ($isOn) {
+            $code = self::ERROR;
+            $value = __('Maintenance mode is active');
+            $link = 'https://help.cobby.io';
+        } else {
+            $code = self::OK;
+            $value = __('Maintenance mode is not active');
+            $link = '';
+        }
+
+        $this->maintenance = array(self::VALUE => $value, self::CODE => $code, self::LINK => $link);
     }
 
     public function getElement($section)

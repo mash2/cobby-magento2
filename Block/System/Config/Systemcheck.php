@@ -19,6 +19,8 @@ class Systemcheck extends Fieldset
     const MEMORY = 'memory';
     const PHP_VERSION = 'phpVersion';
     const CREDENTIALS = 'credentials';
+    const MAINTENANCE = 'maintenance';
+
 
     /**
      * @var \Magento\Framework\View\LayoutFactory
@@ -61,6 +63,7 @@ class Systemcheck extends Fieldset
         $html .= $this->getPhpVersion($element);
         $html .= $this->getMemory($element);
         $html .= $this->getCredentials($element);
+        $html .= $this->getMaintenance($element);
 
         $html .= $this->_getFooterHtml($element);
 
@@ -117,6 +120,17 @@ class Systemcheck extends Fieldset
         $fieldValue = $this->htmlBuilder($sectionValue);
 
         return $this->getFieldHtml($fieldset, 'credits', $label, $fieldValue);
+    }
+
+    private function getMaintenance($fieldset)
+    {
+        $sectionValue = $this->systemCheckHelper->getElement(self::MAINTENANCE);
+        $icon = $this->getIcon($sectionValue[SystemCheckHelper::CODE]);
+        $label = $icon. __(" Maintenance");
+
+        $fieldValue = $this->htmlBuilder($sectionValue);
+
+        return $this->getFieldHtml($fieldset, 'maintenance', $label, $fieldValue);
     }
 
     private function htmlBuilder($sectionValue)
