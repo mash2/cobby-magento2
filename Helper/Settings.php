@@ -19,6 +19,7 @@ class Settings extends \Magento\Framework\App\Helper\AbstractHelper
     const XML_PATH_COBBY_SETTINGS_AVAILABILITY  = 'cobby/stock/availability';
     const XML_PATH_COBBY_SETTINGS_QUANTITY      = 'cobby/stock/quantity';
     const XML_PATH_COBBY_SETTINGS_ACTIVE        = 'cobby/settings/active';
+    const XML_PATH_COBBY_URL                    = 'cobby/settings/base_url';
     const MANAGE_STOCK_ENABLED                  = 0;
     const MANAGE_STOCK_READONLY                 = 1;
     const MANAGE_STOCK_DISABLED                 = 2;
@@ -85,6 +86,16 @@ class Settings extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->storeManager
             ->getStore(\Magento\Store\Model\Store::DEFAULT_STORE_ID)
             ->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB, ['_secure' => true]);
+    }
+
+    public function setCobbyUrl($url)
+    {
+        $this->config->saveConfig(self::XML_PATH_COBBY_URL, $url);
+    }
+
+    public function getCobbyUrl()
+    {
+        return $this->scopeConfig->getValue(self::XML_PATH_COBBY_URL);
     }
 
     /**

@@ -43,6 +43,8 @@ class SaveConfig implements ObserverInterface
         if ($this->settings->getCobbyActive()) {
             $this->cobbyApi->registerShop($apiUser, $apiPassword);
 
+            $this->settings->setCobbyUrl($this->settings->getDefaultBaseUrl());
+
             $this->messageManager->addSuccess(self::SUCCESS_MESSAGE);
         }
 

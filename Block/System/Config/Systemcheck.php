@@ -21,6 +21,7 @@ class Systemcheck extends Fieldset
     const CREDENTIALS = 'credentials';
     const MAINTENANCE = 'maintenance';
     const INDEXERS = 'indexers';
+    const URL = 'url';
 
     /**
      * @var \Magento\Framework\View\LayoutFactory
@@ -65,6 +66,7 @@ class Systemcheck extends Fieldset
         $html .= $this->getCredentials($element);
         $html .= $this->getMaintenance($element);
         $html .= $this->getIndexers($element);
+        $html .= $this->getUrlCheck($element);
 
         $html .= $this->_getFooterHtml($element);
 
@@ -126,7 +128,7 @@ class Systemcheck extends Fieldset
     private function getMaintenance($fieldset)
     {
         $sectionValue = $this->systemCheckHelper->getElement(self::MAINTENANCE);
-        $icon = $this->getIcon($sectionValue[SystemCheckHelper::CODE]);
+        $icon = $this->getIcon($sectionValue[SystemcheckHelper::CODE]);
         $label = $icon. __(" Maintenance");
 
         $fieldValue = $this->htmlBuilder($sectionValue);
@@ -137,12 +139,23 @@ class Systemcheck extends Fieldset
     private function getIndexers($fieldset)
     {
         $sectionValue = $this->systemCheckHelper->getElement(self::INDEXERS);
-        $icon = $this->getIcon($sectionValue[SystemCheckHelper::CODE]);
+        $icon = $this->getIcon($sectionValue[SystemcheckHelper::CODE]);
         $label = $icon . __(" Indexers");
 
         $fieldValue = $this->htmlBuilder($sectionValue);
 
         return $this->getFieldHtml($fieldset, 'indexers', $label, $fieldValue, $icon);
+    }
+
+    private function getUrlCheck($fieldset)
+    {
+        $sectionValue = $this->systemCheckHelper->getElement(self::URL);
+        $icon = $this->getIcon($sectionValue[SystemcheckHelper::CODE]);
+        $label = $icon . __(" Url");
+
+        $fieldValue = $this->htmlBuilder($sectionValue);
+
+        return $this->getFieldHtml($fieldset, 'url', $label, $fieldValue, $icon);
     }
 
     private function htmlBuilder($sectionValue)

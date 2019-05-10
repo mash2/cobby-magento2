@@ -37,6 +37,7 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
     private $maintenance;
     private $maintenanceMode;
     private $indexers;
+    private $url;
 
     /**
      * @var IndexerRepository
@@ -73,7 +74,6 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         $this->_curl = $curl;
         $this->maintenanceMode = $maintenanceMode;
         $this->indexerRepository = $indexerRepository;
-
         $this->_init();
     }
 
@@ -85,6 +85,8 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         $this->checkCredentials();
         $this->checkMaintenanceMode();
         $this->checkIndexers();
+        $this->checkUrl();
+
     }
 
     private function checkPhpVersion()
@@ -196,6 +198,26 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $this->indexers = array(self::VALUE => $value, self::CODE => $code, self::LINK => $link);
+    }
+
+    private function checkUrl()
+    {
+        $value = 'Your url is up to date';
+        $code = self::OK;
+        $link = '';
+
+        $baseUrl = $this->settings->getDefaultBaseUrl();
+        $cobbyUrl = $this->settings->getCobbyUrl();
+
+        $len = strlen($cobbyUrl);
+
+        if (substr($baseUrl, 0, $len) !== $cobbyUrl) {
+            $value = 'Your cobby url does not match the shop url, you need to save config or disable cobby';
+            $code = self::ERROR;
+            $link = self::URL;
+        }
+
+        $this->url = array(self::VALUE => $value, self::CODE => $code, self::LINK => $link);
     }
 
     public function getElement($section)
