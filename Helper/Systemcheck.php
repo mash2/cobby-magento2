@@ -38,6 +38,7 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
     private $maintenanceMode;
     private $indexers;
     private $url;
+    private $cobbyActive;
 
     /**
      * @var IndexerRepository
@@ -74,6 +75,7 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         $this->_curl = $curl;
         $this->maintenanceMode = $maintenanceMode;
         $this->indexerRepository = $indexerRepository;
+
         $this->_init();
     }
 
@@ -86,7 +88,7 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         $this->checkMaintenanceMode();
         $this->checkIndexers();
         $this->checkUrl();
-
+        $this->checkCobbyActive();
     }
 
     private function checkPhpVersion()
@@ -160,16 +162,16 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
 
     private function checkMaintenanceMode()
     {
+        $code = self::OK;
+        $value = __('Maintenance mode is not active');
+        $link = '';
+
         $isOn = $this->maintenanceMode->isOn();
 
         if ($isOn) {
             $code = self::ERROR;
             $value = __('Maintenance mode is active');
-            $link = 'https://help.cobby.io';
-        } else {
-            $code = self::OK;
-            $value = __('Maintenance mode is not active');
-            $link = '';
+            $link = self::URL;
         }
 
         $this->maintenance = array(self::VALUE => $value, self::CODE => $code, self::LINK => $link);
@@ -177,7 +179,7 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
 
     private function checkIndexers()
     {
-        $value = __('No index is running');
+        $value = __('No indexer is running');
         $code = self::OK;
         $link = '';
 
@@ -202,7 +204,7 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
 
     private function checkUrl()
     {
-        $value = 'Your url is up to date';
+        $value = __('Your url is up to date');
         $code = self::OK;
         $link = '';
 
@@ -212,12 +214,29 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         $len = strlen($cobbyUrl);
 
         if (substr($baseUrl, 0, $len) !== $cobbyUrl) {
-            $value = 'Your cobby url does not match the shop url, you need to save config or disable cobby';
+            $value = __('Your cobby url does not match the shop url, you need to save config or disable cobby');
             $code = self::ERROR;
             $link = self::URL;
         }
 
         $this->url = array(self::VALUE => $value, self::CODE => $code, self::LINK => $link);
+    }
+
+    private function checkCobbyActive()
+    {
+        $value = __('Cobby is active');
+        $code = self::OK;
+        $link = '';
+
+        $active = $this->scopeConfig->isSetFlag('cobby/settings/active');
+
+        if (!$active) {
+            $value = __('Cobby must be enabled to work as expected');
+            $code = self::ERROR;
+            $link = self::URL;
+        }
+
+        $this->cobbyActive = array(self::VALUE => $value, self::CODE => $code, self::LINK => $link);
     }
 
     public function getElement($section)
