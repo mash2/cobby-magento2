@@ -20,7 +20,7 @@ class Systemcheck extends Fieldset
     const PHP_VERSION = 'phpVersion';
     const CREDENTIALS = 'credentials';
     const MAINTENANCE = 'maintenance';
-
+    const INDEXERS = 'indexers';
 
     /**
      * @var \Magento\Framework\View\LayoutFactory
@@ -64,6 +64,7 @@ class Systemcheck extends Fieldset
         $html .= $this->getMemory($element);
         $html .= $this->getCredentials($element);
         $html .= $this->getMaintenance($element);
+        $html .= $this->getIndexers($element);
 
         $html .= $this->_getFooterHtml($element);
 
@@ -131,6 +132,17 @@ class Systemcheck extends Fieldset
         $fieldValue = $this->htmlBuilder($sectionValue);
 
         return $this->getFieldHtml($fieldset, 'maintenance', $label, $fieldValue);
+    }
+
+    private function getIndexers($fieldset)
+    {
+        $sectionValue = $this->systemCheckHelper->getElement(self::INDEXERS);
+        $icon = $this->getIcon($sectionValue[SystemCheckHelper::CODE]);
+        $label = $icon . __(" Indexers");
+
+        $fieldValue = $this->htmlBuilder($sectionValue);
+
+        return $this->getFieldHtml($fieldset, 'indexers', $label, $fieldValue, $icon);
     }
 
     private function htmlBuilder($sectionValue)

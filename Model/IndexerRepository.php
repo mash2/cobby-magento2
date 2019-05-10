@@ -2,21 +2,8 @@
 
 namespace Mash2\Cobby\Model;
 
-
 class IndexerRepository implements \Mash2\Cobby\Api\IndexerRepositoryInterface
 {
-    /**
-     * Indexer collection
-     *
-     * @var \Magento\Indexer\Model\Indexer\Collection
-     */
-    protected $indexerCollection;
-
-    /**
-     * @var \Magento\Indexer\Model\Indexer $indexer
-     */
-    protected $indexer;
-
     /**
      * @var \Magento\Catalog\Model\Indexer\Product\Flat\Processor
      */
@@ -52,9 +39,10 @@ class IndexerRepository implements \Mash2\Cobby\Api\IndexerRepositoryInterface
      */
     private $stockProductProcessor;
 
+    private $indexerCollectionFactory;
+
     /**
-     * @param \Magento\Indexer\Model\Indexer\Collection $indexerCollection
-     * @param \Magento\Indexer\Model\Indexer $indexer
+     * @param \Magento\Indexer\Model\Indexer\CollectionFactory $indexerCollectionFactory
      * @param \Magento\Catalog\Model\Indexer\Product\Flat\Processor $productFlatProcessor
      * @param \Magento\Catalog\Model\Indexer\Category\Product $categoryProductProcessor
      * @param \Magento\Catalog\Model\Indexer\Product\Price $priceProductProcessor
@@ -64,8 +52,7 @@ class IndexerRepository implements \Mash2\Cobby\Api\IndexerRepositoryInterface
      * @param \Magento\Catalog\Model\Indexer\Category\Flat\State $categoryFlatState
      */
     public function __construct(
-        \Magento\Indexer\Model\Indexer\Collection $indexerCollection,
-        \Magento\Indexer\Model\Indexer $indexer,
+        \Magento\Indexer\Model\Indexer\CollectionFactory $indexerCollectionFactory,
         \Magento\Catalog\Model\Indexer\Product\Flat\Processor $productFlatProcessor,
         \Magento\Catalog\Model\Indexer\Category\Product $categoryProductProcessor,
         \Magento\Catalog\Model\Indexer\Product\Price $priceProductProcessor,
@@ -75,8 +62,6 @@ class IndexerRepository implements \Mash2\Cobby\Api\IndexerRepositoryInterface
         \Magento\Catalog\Model\Indexer\Category\Flat\State $categoryFlatState
     )
     {
-        $this->indexerCollection = $indexerCollection;
-        $this->indexer = $indexer;
         $this->productFlatProcessor = $productFlatProcessor;
         $this->jsonHelper = $jsonHelper;
         $this->productFlatState = $productFlatState;
@@ -84,26 +69,35 @@ class IndexerRepository implements \Mash2\Cobby\Api\IndexerRepositoryInterface
         $this->categoryProductProcessor = $categoryProductProcessor;
         $this->priceProductProcessor = $priceProductProcessor;
         $this->stockProductProcessor = $stockProductProcessor;
+        $this->indexerCollectionFactory = $indexerCollectionFactory;
     }
 
     public function export()
     {
         $result = array();
 
-        foreach ($this->indexerCollection as $item) {
+        $indexerCollection = $this->indexerCollectionFactory->create()->getItems();
+
+        foreach ($indexerCollection as $indexer) {
             if(
-                ($item->getState()->getIndexerId() == 'catalog_product_flat' &&
+                ($indexer->getId() == 'catalog_product_flat' &&
                     !$this->productFlatState->isFlatEnabled()) ||
-                ($item->getState()->getIndexerId() == 'catalog_category_flat' &&
+                ($indexer->getId() == 'catalog_category_flat' &&
                     !$this->categoryFlatState->isFlatEnabled())
             ) {
                 continue;
             }
 
+            $title = $indexer->getTitle();
+            $code = $indexer->getId();
+            $status = $indexer->getStatus();
+            $mode = $indexer->isScheduled() ? 'scheduled' : 'real_time';
+
             $result[] = array(
-                'code' => $item->getState()->getIndexerId(),
-                'status' => $item->getView()->getState()->getStatus(),
-                'mode' => $item->getView()->getState()->getMode()
+                'code' => $code,
+                'title' => $title,
+                'status' => $status,
+                'mode' => $mode
             );
         }
 

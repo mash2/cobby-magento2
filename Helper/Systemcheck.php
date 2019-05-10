@@ -6,6 +6,7 @@ use Magento\Framework\App\Helper\Context;
 use Magento\Backend\Model\UrlInterface;
 use Magento\Framework\App\MaintenanceMode;
 use Magento\Framework\HTTP\Client\Curl;
+use Mash2\Cobby\Model\IndexerRepository;
 
 class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
 {
@@ -20,6 +21,14 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
     const PHP_MIN_VERSION = '7.0';
     const MIN_MEMORY = 512;
 
+    private $relevantIndexers = array(
+        'catalog_category_product' => '',
+        'catalog_product_price' => '',
+        'cataloginventory_stock' => '',
+        'catalog_product_flat' => '',
+        'catalog_category_flat' => ''
+    );
+
     private $settings;
     private $backendUrl;
     private $phpVersion;
@@ -27,17 +36,33 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
     private $credentials;
     private $maintenance;
     private $maintenanceMode;
+    private $indexers;
+
+    /**
+     * @var IndexerRepository
+     */
+    private $indexerRepository;
 
     /**
      * @var \Magento\Framework\HTTP\Client\Curl
      */
     protected $_curl;
 
+    /**
+     * Systemcheck constructor.
+     * @param Context $context
+     * @param Settings $settings
+     * @param UrlInterface $backendUrl
+     * @param MaintenanceMode $maintenanceMode
+     * @param IndexerRepository $indexerRepository
+     * @param Curl $curl
+     */
     public function __construct(
         Context $context,
         Settings $settings,
         UrlInterface $backendUrl,
         MaintenanceMode $maintenanceMode,
+        IndexerRepository $indexerRepository,
         Curl $curl
     )
     {
@@ -47,6 +72,7 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         $this->backendUrl = $backendUrl;
         $this->_curl = $curl;
         $this->maintenanceMode = $maintenanceMode;
+        $this->indexerRepository = $indexerRepository;
 
         $this->_init();
     }
@@ -58,6 +84,7 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         $this->checkMemory();
         $this->checkCredentials();
         $this->checkMaintenanceMode();
+        $this->checkIndexers();
     }
 
     private function checkPhpVersion()
@@ -144,6 +171,31 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $this->maintenance = array(self::VALUE => $value, self::CODE => $code, self::LINK => $link);
+    }
+
+    private function checkIndexers()
+    {
+        $value = __('No index is running');
+        $code = self::OK;
+        $link = '';
+
+        $runningIndexers = array();
+
+        $indexers = $this->indexerRepository->export();
+
+        foreach ($indexers as $indexer) {
+            if (key_exists($indexer['code'], $this->relevantIndexers) && $indexer['status'] == 'working') {
+                $runningIndexers[] = $indexer['title'];
+            }
+        }
+
+        if (!empty($runningIndexers)) {
+            $value = __('Magento indexers are running. Indexers: ') .implode('; ', $runningIndexers);
+            $code = self::ERROR;
+            $link = self::URL;
+        }
+
+        $this->indexers = array(self::VALUE => $value, self::CODE => $code, self::LINK => $link);
     }
 
     public function getElement($section)
