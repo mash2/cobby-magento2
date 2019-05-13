@@ -23,6 +23,7 @@ class Systemcheck extends Fieldset
     const INDEXERS = 'indexers';
     const URL = 'url';
     const COBBY_ACTIVE = 'cobbyActive';
+    const COBBY_VERSION = 'cobbyVersion';
 
     /**
      * @var \Magento\Framework\View\LayoutFactory
@@ -72,6 +73,7 @@ class Systemcheck extends Fieldset
         $html .= $this->getIndexers($element);
         $html .= $this->getUrlCheck($element);
         $html .= $this->getCobbyActive($element);
+        $html .= $this->getCobbyVersion($element);
 
         $html .= $this->_getFooterHtml($element);
 
@@ -172,6 +174,17 @@ class Systemcheck extends Fieldset
         $fieldValue = $this->htmlBuilder($sectionValue);
 
         return $this->getFieldHtml($fieldset, 'cobby_active', $label, $fieldValue, $icon);
+    }
+
+    private function getCobbyVersion($fieldset)
+    {
+        $sectionValue = $this->systemCheckHelper->getElement(self::COBBY_VERSION);
+        $icon = $this->getIcon($sectionValue[SystemcheckHelper::CODE]);
+        $label = $icon . __(" Cobby Version");
+
+        $fieldValue = $this->htmlBuilder($sectionValue);
+
+        return $this->getFieldHtml($fieldset, 'cobby_synced', $label, $fieldValue, $icon);
     }
 
     private function htmlBuilder($sectionValue)

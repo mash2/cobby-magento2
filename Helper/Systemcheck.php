@@ -39,6 +39,8 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
     private $indexers;
     private $url;
     private $cobbyActive;
+    private $cobbyVersion;
+
 
     /**
      * @var IndexerRepository
@@ -89,6 +91,8 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         $this->checkIndexers();
         $this->checkUrl();
         $this->checkCobbyActive();
+        $this->checkCobbyVersion();
+
     }
 
     private function checkPhpVersion()
@@ -237,6 +241,25 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $this->cobbyActive = array(self::VALUE => $value, self::CODE => $code, self::LINK => $link);
+    }
+
+    private function checkCobbyVersion()
+    {
+        $value = __('Your module version is synchronized');
+        $code = self::OK;
+        $link = '';
+
+        $dbVersion = $this->scopeConfig->getValue('cobby/settings/cobby_dbversion');
+        $moduleVersion = $this->settings->getCobbyVersion();
+
+        if ($dbVersion != $moduleVersion) {
+            $value = __('Your module version is not synchronized, you must save the synchronization configuration.');
+            $code = self::ERROR;
+            $link = self::URL;
+        }
+
+        $this->cobbyVersion = array(self::VALUE => $value, self::CODE => $code, self::LINK => $link);
+
     }
 
     public function getElement($section)

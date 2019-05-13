@@ -39,6 +39,7 @@ class SaveConfig implements ObserverInterface
     {
         $apiUser = $this->settings->getApiUser();
         $apiPassword = $this->settings->getApiPassword();
+        $this->settings->setCobbyVersion();
 
         if ($this->settings->getCobbyActive()) {
             $this->cobbyApi->registerShop($apiUser, $apiPassword);
