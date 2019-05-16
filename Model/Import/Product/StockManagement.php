@@ -208,7 +208,6 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         }
 
         if (!empty($inventorySourceAppendItems)) {
-            //$this->sourceItemsSave->execute($inventorySourceAppendItems);
 
             //"This code needs porting or exist for backward compatibility purposes."
             //(https://devdocs.magento.com/guides/v2.2/extension-dev-guide/object-manager.html)
@@ -219,7 +218,6 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         }
 
         if (!empty($inventorySourceDeleteItems)) {
-            //$this->sourceItemsSave->execute($inventorySourceDeleteItems);
 
             //"This code needs porting or exist for backward compatibility purposes."
             //(https://devdocs.magento.com/guides/v2.2/extension-dev-guide/object-manager.html)
