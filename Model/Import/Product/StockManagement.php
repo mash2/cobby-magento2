@@ -56,6 +56,9 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
 
     private $productMetadata;
 
+    private $stockItemRepo;
+    private $stockItem;
+
     /**
      * StockManagement constructor.
      * @param \Magento\Framework\App\ResourceConnection $resourceModel
@@ -78,13 +81,17 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         \Magento\CatalogInventory\Model\Spi\StockStateProviderInterface $stockStateProvider,
         \Mash2\Cobby\Helper\Settings $cobbySettings,
         \Mash2\Cobby\Model\Product $product,
-        \Magento\Framework\App\ProductMetadata $productMetadata
+        \Magento\Framework\App\ProductMetadata $productMetadata,
+        \Magento\CatalogInventory\Model\Stock\StockItemRepository $stockItemRepo,
+        \Magento\CatalogInventory\Api\Data\StockItemInterface $stockItem
     ) {
         $this->stockRegistry = $stockRegistry;
         $this->stockConfiguration = $stockConfiguration;
         $this->stockStateProvider = $stockStateProvider;
         $this->cobbySettings = $cobbySettings;
         $this->productMetadata = $productMetadata;
+        $this->stockItemRepo = $stockItemRepo;
+        $this->stockItem = $stockItem;
         parent::__construct($resourceModel, $productCollectionFactory, $eventManager, $resourceHelper, $product);
     }
 
@@ -182,11 +189,24 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
             $stockItems[] = $stockItemDo->getData();
         }
 
+        if (!empty($stockItems)) {
+            foreach ($stockItems as $stockItem) {
+                $stockItem['item_id'] = $stockItem['product_id'];
+                $stockItem['type_id'] = 'simple';
+                $this->stockItem->setData($stockItem);
+                $this->stockItemRepo->save($this->stockItem);
+            }
+        }
+
+        /*
             // Insert rows
         if (!empty($stockItems)) {
             $this->connection->insertOnDuplicate($entityTable, array_values($stockItems));
             $this->touchProducts($existingProductIds);
         }
+
+
+
 
         if (!empty($inventorySourceAppendItems)) {
             //"This code needs porting or exist for backward compatibility purposes."
@@ -203,6 +223,7 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
             $this->commandDelete = $objectManager->create('Magento\InventoryImportExport\Model\Import\Command\Delete');
             $this->commandDelete->execute($inventorySourceDeleteItems);
         }
+        */
 
         $this->eventManager->dispatch('cobby_import_product_stock_import_after', array( 'products' => $productIds ));
 
