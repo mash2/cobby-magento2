@@ -56,6 +56,16 @@ matrix:
     - php: 7.0
       env: magento=2.3.1
     - php: 7.2
+      env: magento=2.1.5
+    - php: 7.2
+      env: magento=2.1.6
+    - php: 7.2
+      env: magento=2.1.7
+    - php: 7.2
+      env: magento=2.1.8
+    - php: 7.2
+      env: magento=2.1.9
+    - php: 7.2
       env: magento=2.2.0
     - php: 7.2
       env: magento=2.2.1
