@@ -4,9 +4,6 @@
     <event name="admin_system_config_changed_section_cobby">
         <observer name="cobby_config_saved" instance="Mash2\Cobby\Observer\SaveConfig" />
     </event>
-    <event name="admin_system_stores_changed">
-        <observer name="stores_changed" instance="Mash2\Cobby\Observer\StoresChanged" />
-    </event>
     <!--event name="admin_system_config_changed_section_catalog">
         <observer name="core_config_data_save" instance="Mash2\Cobby\Observer\CoreConfigDataSave" />
     </event-->
