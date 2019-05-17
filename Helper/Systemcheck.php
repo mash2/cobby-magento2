@@ -95,6 +95,22 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
 
     }
 
+    public function getTestResults()
+    {
+        $result = array(
+            'php_version' => $this->phpVersion,
+            'memory' => $this->memory,
+            'login' => $this->credentials,
+            'maintenance' => $this->maintenance,
+            'indexers' => $this->indexers,
+            'url' => $this->url,
+            'cobby_active' => $this->cobbyActive,
+            'cobby_version' => $this->cobbyVersion
+        );
+
+        return $result;
+    }
+
     private function checkPhpVersion()
     {
         $code = self::OK;
