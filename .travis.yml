@@ -6,6 +6,7 @@ language: php
 php:
   - 5.6
   - 7.0
+  - 7.2
 
 env:
   matrix:
@@ -21,6 +22,10 @@ env:
     - magento=2.2.4
     - magento=2.2.5
     - magento=2.2.6
+    - magento=2.2.7
+    - magento=2.2.8
+    - magento=2.3.0
+    - magento=2.3.1
 
 matrix:
   exclude:
@@ -38,6 +43,36 @@ matrix:
       env: magento=2.2.5
     - php: 5.6
       env: magento=2.2.6
+    - php: 5.6
+      env: magento=2.2.7
+    - php: 5.6
+      env: magento=2.2.8
+    - php: 5.6
+      env: magento=2.3.0
+    - php: 5.6
+      env: magento=2.3.1
+    - php: 7.0
+      env: magento=2.3.0
+    - php: 7.0
+      env: magento=2.3.1
+    - php: 7.2
+      env: magento=2.2.0
+    - php: 7.2
+      env: magento=2.2.1
+    - php: 7.2
+      env: magento=2.2.2
+    - php: 7.2
+      env: magento=2.2.3
+    - php: 7.2
+      env: magento=2.2.4
+    - php: 7.2
+      env: magento=2.2.5
+    - php: 7.2
+      env: magento=2.2.6
+    - php: 7.2
+      env: magento=2.2.7
+    - php: 7.2
+      env: magento=2.2.8
 
 cache:
   directories:
