@@ -59,9 +59,6 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
     private $stockItemRepo;
     private $stockItemInterface;
     private $stockItem;
-    private $sourceItemFactory;
-    private $sourceItemsSave;
-    private $sourceItemsDelete;
 
     /**
      * StockManagement constructor.
@@ -88,10 +85,7 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         \Magento\Framework\App\ProductMetadata $productMetadata,
         \Magento\CatalogInventory\Model\Stock\StockItemRepository $stockItemRepo,
         \Magento\CatalogInventory\Api\Data\StockItemInterface $stockItemInterface,
-        \Magento\CatalogInventory\Model\Stock\Item $stockItem,
-        \Magento\Inventory\Model\SourceItemFactory $sourceItemFactory,
-        \Magento\Inventory\Model\SourceItem\Command\SourceItemsSave $sourceItemsSave,
-        \Magento\Inventory\Model\SourceItem\Command\SourceItemsDelete $sourceItemsDelete
+        \Magento\CatalogInventory\Model\Stock\Item $stockItem
     ) {
         $this->stockRegistry = $stockRegistry;
         $this->stockConfiguration = $stockConfiguration;
@@ -101,9 +95,6 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         $this->stockItemRepo = $stockItemRepo;
         $this->stockItemInterface = $stockItemInterface;
         $this->stockItem = $stockItem;
-        $this->sourceItemFactory = $sourceItemFactory;
-        $this->sourceItemsSave = $sourceItemsSave;
-        $this->sourceItemsDelete = $sourceItemsDelete;
         parent::__construct($resourceModel, $productCollectionFactory, $eventManager, $resourceHelper, $product);
     }
 
@@ -140,7 +131,12 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
 
             if (!empty($row['inventory_sources']) && $multiSources) {
                 foreach( $row['inventory_sources'] as $inventorySource ) {
-                    $sourceItem = $this->sourceItemFactory->create();
+
+                    //"This code needs porting or exist for backward compatibility purposes."
+                    //(https://devdocs.magento.com/guides/v2.2/extension-dev-guide/object-manager.html)
+                    $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+                    $sourceItem = $objectManager->create('\Magento\Inventory\Model\SourceItem');
+
                     if($inventorySource[self::OBJECT_STATE] == self::DELETED ) {
                         $sourceItem->setData($inventorySource);
                         $inventorySourceDeleteItems[] = $sourceItem;
@@ -154,6 +150,8 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
             if ($multiSources) {
                 $this->defaultStockData['item_id'] = '';
             }
+
+            $this->defaultStockData['item_id'] = '';
 
             unset($row['inventory_sources']);
 
