@@ -7,6 +7,7 @@ use Magento\Backend\Model\UrlInterface;
 use Magento\Framework\App\MaintenanceMode;
 use Magento\Framework\HTTP\Client\Curl;
 use Mash2\Cobby\Model\IndexerRepository;
+use Magento\Framework\App\ProductMetadata;
 
 class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
 {
@@ -52,6 +53,8 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
      */
     protected $_curl;
 
+    private $productMetadata;
+
     /**
      * Systemcheck constructor.
      * @param Context $context
@@ -67,7 +70,8 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         UrlInterface $backendUrl,
         MaintenanceMode $maintenanceMode,
         IndexerRepository $indexerRepository,
-        Curl $curl
+        Curl $curl,
+        ProductMetadata $productMetadata
     )
     {
         parent::__construct($context);
@@ -75,6 +79,7 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         $this->settings = $settings;
         $this->backendUrl = $backendUrl;
         $this->_curl = $curl;
+        $this->productMetadata = $productMetadata;
         $this->maintenanceMode = $maintenanceMode;
         $this->indexerRepository = $indexerRepository;
 
@@ -161,16 +166,22 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         $value = __('Login data is set up correctly');
         $link = '';
 
+        $testable = version_compare($this->productMetadata->getVersion(), "2.2.0", ">=");
+
         $url = $this->getApiUrl();
         $data = $this->_getLoginData();
 
-        if ($data) {
+        if ($data && $testable) {
             $login = $this->_login($url, $data);
             if (!$login) {
                 $code = self::ERROR;
                 $value = __('It seems like your login data is incorrect, check your credentials');
                 $link = self::URL;
             }
+        } elseif (!$testable) {
+            $code = self::EXCEPTION;
+            $value = __('This test is not supported in this magento version');
+            $link = self::URL;
         } else {
             $code = self::EXCEPTION;
             $value = __('It seems like you have no login data, enter your credentials and hit "Save Config"');
