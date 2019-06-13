@@ -114,19 +114,19 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
     private function checkPhpVersion()
     {
         $code = self::OK;
-        $value = __('Your php version is ok');
+        $value = __('PHP version ok');
         $link = '';
         try {
             $version = phpversion();
 
             if (version_compare($version, self::PHP_MIN_VERSION, '<')) {
                 $code = self::ERROR;
-                $value = __('Your php version is %1, it must be at least %2', $version, self::PHP_MIN_VERSION);
+                $value = __('PHP version is %1, it must be at least %2', $version, self::PHP_MIN_VERSION);
                 $link = self::URL;
             }
         } catch (\Exception $e) {
             $code = self::EXCEPTION;
-            $value = $e->getMessage();
+            $value = __('Couldn’t be checked: ') . $e->getMessage();
             $link = self::URL;
         }
 
@@ -136,19 +136,19 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
     private function checkMemory()
     {
         $code = self::OK;
-        $value = __('You have enough memory');
+        $value = __('Memory ok');
         $link = '';
         try {
             $memory = ini_get('memory_limit');
 
             if ((int)$memory < self::MIN_MEMORY) {
                 $code = self::ERROR;
-                $value = __('Your memory is %1MB, it has to be at least %2MB', $memory, self::MIN_MEMORY);
+                $value = __('Memory is %1MB, it has to be at least %2MB', $memory, self::MIN_MEMORY);
                 $link = self::URL;
             }
         } catch (\Exception $e) {
             $code = self::EXCEPTION;
-            $value = $e->getMessage();
+            $value = __('Couldn’t be checked: ') . $e->getMessage();
             $link = self::URL;
         }
 
@@ -168,12 +168,12 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
             $login = $this->_login($url, $data);
             if (!$login) {
                 $code = self::ERROR;
-                $value = __('It seems like your login data is incorrect, check your credentials');
+                $value = __('It seems the provided credentials are wrong');
                 $link = self::URL;
             }
         } else {
             $code = self::EXCEPTION;
-            $value = __('It seems like you have no login data, enter your credentials and hit "Save Config"');
+            $value = __('It seems like you have no login data, enter your credentials and save config');
             $link = self::URL;
         }
 
@@ -183,14 +183,14 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
     private function checkMaintenanceMode()
     {
         $code = self::OK;
-        $value = __('Maintenance mode is not active');
+        $value = __('Is not active');
         $link = '';
 
         $isOn = $this->maintenanceMode->isOn();
 
         if ($isOn) {
             $code = self::ERROR;
-            $value = __('Maintenance mode is active');
+            $value = __('Is active');
             $link = self::URL;
         }
 
@@ -199,7 +199,7 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
 
     private function checkIndexers()
     {
-        $value = __('No indexer is running');
+        $value = __('Index is valid');
         $code = self::OK;
         $link = '';
 
@@ -214,7 +214,7 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         if (!empty($runningIndexers)) {
-            $value = __('Magento indexers are running. Indexers: ') .implode('; ', $runningIndexers);
+            $value = __('Indexing is in progress for: ') .implode('; ', $runningIndexers);
             $code = self::ERROR;
             $link = self::URL;
         }
@@ -224,7 +224,7 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
 
     private function checkUrl()
     {
-        $value = __('Your url is up to date');
+        $value = __('URL is up to date');
         $code = self::OK;
         $link = '';
 
@@ -234,7 +234,7 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         $len = strlen($cobbyUrl);
 
         if (substr($baseUrl, 0, $len) !== $cobbyUrl) {
-            $value = __('Your cobby url does not match the shop url, you need to save config or disable cobby');
+            $value = __("The cobby URL doesn't match the base URL, save config or disable cobby");
             $code = self::ERROR;
             $link = self::URL;
         }
@@ -244,14 +244,14 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
 
     private function checkCobbyActive()
     {
-        $value = __('Cobby is active');
+        $value = __('cobby is active');
         $code = self::OK;
         $link = '';
 
         $active = $this->scopeConfig->isSetFlag('cobby/settings/active');
 
         if (!$active) {
-            $value = __('Cobby must be enabled to work as expected');
+            $value = __('cobby must be activated to work as expected');
             $code = self::ERROR;
             $link = self::URL;
         }
@@ -269,7 +269,7 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         $moduleVersion = $this->settings->getCobbyVersion();
 
         if ($dbVersion != $moduleVersion) {
-            $value = __('Your module version is not synchronized, you must save the synchronization configuration.');
+            $value = __('Your module version is not synchronized, save config for synchronization');
             $code = self::ERROR;
             $link = self::URL;
         }
