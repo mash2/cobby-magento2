@@ -1,5 +1,5 @@
 <?php
-namespace Mash2\Cobby\Model\Config\Source;
+namespace Mash2\Cobby\Model\Source;
 
 class Managestock implements \Magento\Framework\Option\ArrayInterface
 {

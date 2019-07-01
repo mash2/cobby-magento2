@@ -91,10 +91,7 @@ class Settings extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function setCobbyUrl($url)
     {
-        $this->config->saveConfig(self::XML_PATH_COBBY_URL,
-            $url,
-            \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-            0);
+        $this->config->saveConfig(self::XML_PATH_COBBY_URL, $url);
     }
 
     public function getCobbyUrl()
@@ -105,9 +102,7 @@ class Settings extends \Magento\Framework\App\Helper\AbstractHelper
     public function setCobbyVersion()
     {
         $this->config->saveConfig(self::XML_PATH_COBBY_DBVERSION,
-            $this->scopeConfig->getValue(self::XML_PATH_COBBY_VERSION),
-            \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-            0);
+            $this->scopeConfig->getValue(self::XML_PATH_COBBY_VERSION));
     }
 
     /**
@@ -135,10 +130,7 @@ class Settings extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function setCobbyActive($value)
     {
-        $this->config->saveConfig(self::XML_PATH_COBBY_SETTINGS_ACTIVE,
-            $value,
-            \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-            0);
+        $this->config->saveConfig(self::XML_PATH_COBBY_SETTINGS_ACTIVE, $value);
         return true;
     }
 
