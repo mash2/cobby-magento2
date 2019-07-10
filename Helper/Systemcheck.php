@@ -3,10 +3,9 @@
 namespace Mash2\Cobby\Helper;
 
 use Magento\Framework\App\Helper\Context;
-use Magento\Backend\Model\UrlInterface;
 use Magento\Framework\App\MaintenanceMode;
-use Magento\Framework\HTTP\Client\Curl;
 use Mash2\Cobby\Model\IndexerRepository;
+use Magento\User\Model\User;
 
 class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
 {
@@ -17,7 +16,6 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
     const CODE = 'code';
     const LINK = 'link';
     const URL = 'https://help.cobby.io';
-    const API_ROUTE = 'index.php/rest/V1/integration/admin/token';
     const PHP_MIN_VERSION = '7.0';
     const MIN_MEMORY = 512;
 
@@ -30,7 +28,6 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
     );
 
     private $settings;
-    private $backendUrl;
     private $phpVersion;
     private $memory;
     private $credentials;
@@ -48,33 +45,30 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
     private $indexerRepository;
 
     /**
-     * @var \Magento\Framework\HTTP\Client\Curl
+     * @var User
      */
-    protected $_curl;
+    protected $user;
 
     /**
      * Systemcheck constructor.
      * @param Context $context
      * @param Settings $settings
-     * @param UrlInterface $backendUrl
      * @param MaintenanceMode $maintenanceMode
      * @param IndexerRepository $indexerRepository
-     * @param Curl $curl
+     * @param User $user
      */
     public function __construct(
         Context $context,
         Settings $settings,
-        UrlInterface $backendUrl,
         MaintenanceMode $maintenanceMode,
         IndexerRepository $indexerRepository,
-        Curl $curl
+        User $user
     )
     {
         parent::__construct($context);
 
         $this->settings = $settings;
-        $this->backendUrl = $backendUrl;
-        $this->_curl = $curl;
+        $this->user = $user;
         $this->maintenanceMode = $maintenanceMode;
         $this->indexerRepository = $indexerRepository;
 
@@ -161,12 +155,11 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         $value = __('Login data is set up correctly');
         $link = '';
 
-        $url = $this->getApiUrl();
         $data = $this->_getLoginData();
 
         if ($data) {
-            $login = $this->_login($url, $data);
-            if (!$login) {
+            $login = $this->user->login($data['username'], $data['password']);
+            if (empty($login->getId())) {
                 $code = self::ERROR;
                 $value = __('It seems the provided credentials are wrong');
                 $link = self::URL;
@@ -233,9 +226,13 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
 
         $len = strlen($cobbyUrl);
 
-        if (substr($baseUrl, 0, $len) !== $cobbyUrl) {
+        if (substr($baseUrl, 0, $len) !== $cobbyUrl && !empty($cobbyUrl)) {
             $value = __("The cobby URL doesn't match the base URL, save config or disable cobby");
             $code = self::ERROR;
+            $link = self::URL;
+        } else if (empty($cobbyUrl)){
+            $value = __("The URL can't be checked, save config");
+            $code = self::EXCEPTION;
             $link = self::URL;
         }
 
@@ -283,15 +280,6 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->{$section};
     }
 
-    private function getApiUrl()
-    {
-        $baseUrl = $this->backendUrl->turnOffSecretKey()->getUrl('adminhtml');
-
-        $url = explode(':', $baseUrl);
-
-        return $url[0] . ':' . $url[1] . '/' . self::API_ROUTE;
-    }
-
     private function _getLoginData()
     {
         $apiUserName = $this->settings->getApiUser();
@@ -303,40 +291,10 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
                 "password" => $apiKey
             );
 
-            return json_encode($data);
+            return $data;
         }
 
         return false;
 
     }
-
-    private function _login($url, $data)
-    {
-        if (strpos($url, 'http') === 0 && strpos($url, '://') !== false) {
-            try {
-                $this->_curl->setHeaders(array('Content-Type: application/json'));
-                $this->_curl->post($url, $data);
-
-                $http_code = $this->_curl->getStatus();
-                $token = $this->_curl->getBody();
-
-                if ($http_code !== 200) {
-                    return false;
-                }
-
-                if ($token) {
-
-                    return true;
-                }
-
-                return false;
-            } catch (\Exception $e) {
-
-                return false;
-            }
-        }
-
-        return false;
-    }
-
 }
