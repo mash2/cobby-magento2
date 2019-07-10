@@ -34,9 +34,10 @@
                 </field>
 
                 <!-- existing user -->
-                <field id="api_user" translate="label" type="text" sortOrder="40" showInDefault="1">
+                <field id="api_user" translate="label" type="select" sortOrder="40" showInDefault="1">
                     <label>User Name</label>
-                    <validate>required-entry</validate>
+                    <source_model>Mash2\Cobby\Model\Config\Source\User</source_model>
+                    <validate>validate-select</validate>
                 </field>
 
                 <field id="api_key" translate="label tooltip comment" type="obscure" sortOrder="50" showInDefault="1">
@@ -53,7 +54,7 @@
                 <field id="manage" translate="label tooltip" type="select" sortOrder="10" showInDefault="1">
                     <label>Stock Management</label>
                     <tooltip>change how cobby handles the stock-attributes. Set disabled/readonly to disallow changes to stock from cobby</tooltip>
-                    <source_model>Mash2\Cobby\Model\Source\Managestock</source_model>
+                    <source_model>Mash2\Cobby\Model\Config\Source\Managestock</source_model>
                     <validate>validate-select</validate>
                 </field>
                 <field id="quantity" translate="label tooltip" type="text" sortOrder="20" showInDefault="1">
