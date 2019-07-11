@@ -241,14 +241,14 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
 
     private function checkCobbyActive()
     {
-        $value = __('cobby is active');
+        $value = __('Cobby is active');
         $code = self::OK;
         $link = '';
 
         $active = $this->scopeConfig->isSetFlag('cobby/settings/active');
 
         if (!$active) {
-            $value = __('cobby must be activated to work as expected');
+            $value = __('Cobby must be activated to work as expected');
             $code = self::ERROR;
             $link = self::URL;
         }
