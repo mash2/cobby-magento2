@@ -373,7 +373,7 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
             foreach ($productsByStores as $storeId => $product) {
                 foreach ($this->categoryCache[$productId] as $categoryId) {
                     $category = $this->categoryProcessor->getCategoryById($categoryId);
-                    if ($category->getParentId() == Category::TREE_ROOT_ID) {
+                    if (!$category || $category->getParentId() == Category::TREE_ROOT_ID) {
                         continue;
                     }
                     $requestPath = $this->productUrlPathGenerator->getUrlPathWithSuffix($product, $storeId, $category);

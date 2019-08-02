@@ -19,12 +19,20 @@ class Systemcheck extends Fieldset
     const MEMORY = 'memory';
     const PHP_VERSION = 'phpVersion';
     const CREDENTIALS = 'credentials';
+    const MAINTENANCE = 'maintenance';
+    const INDEXERS = 'indexers';
+    const URL = 'url';
+    const COBBY_ACTIVE = 'cobbyActive';
+    const COBBY_VERSION = 'cobbyVersion';
 
     /**
      * @var \Magento\Framework\View\LayoutFactory
      */
     private $_layoutFactory;
 
+    /**
+     * @var SystemcheckHelper
+     */
     private $systemCheckHelper;
 
     /**
@@ -61,6 +69,11 @@ class Systemcheck extends Fieldset
         $html .= $this->getPhpVersion($element);
         $html .= $this->getMemory($element);
         $html .= $this->getCredentials($element);
+        $html .= $this->getMaintenance($element);
+        $html .= $this->getIndexers($element);
+        $html .= $this->getUrlCheck($element);
+        $html .= $this->getCobbyActive($element);
+        $html .= $this->getCobbyVersion($element);
 
         $html .= $this->_getFooterHtml($element);
 
@@ -117,6 +130,61 @@ class Systemcheck extends Fieldset
         $fieldValue = $this->htmlBuilder($sectionValue);
 
         return $this->getFieldHtml($fieldset, 'credits', $label, $fieldValue);
+    }
+
+    private function getMaintenance($fieldset)
+    {
+        $sectionValue = $this->systemCheckHelper->getElement(self::MAINTENANCE);
+        $icon = $this->getIcon($sectionValue[SystemcheckHelper::CODE]);
+        $label = $icon. __(" Maintenance");
+
+        $fieldValue = $this->htmlBuilder($sectionValue);
+
+        return $this->getFieldHtml($fieldset, 'maintenance', $label, $fieldValue);
+    }
+
+    private function getIndexers($fieldset)
+    {
+        $sectionValue = $this->systemCheckHelper->getElement(self::INDEXERS);
+        $icon = $this->getIcon($sectionValue[SystemcheckHelper::CODE]);
+        $label = $icon . __(" Indexers");
+
+        $fieldValue = $this->htmlBuilder($sectionValue);
+
+        return $this->getFieldHtml($fieldset, 'indexers', $label, $fieldValue, $icon);
+    }
+
+    private function getUrlCheck($fieldset)
+    {
+        $sectionValue = $this->systemCheckHelper->getElement(self::URL);
+        $icon = $this->getIcon($sectionValue[SystemcheckHelper::CODE]);
+        $label = $icon . __(" Url");
+
+        $fieldValue = $this->htmlBuilder($sectionValue);
+
+        return $this->getFieldHtml($fieldset, 'url', $label, $fieldValue, $icon);
+    }
+
+    private function getCobbyActive($fieldset)
+    {
+        $sectionValue = $this->systemCheckHelper->getElement(self::COBBY_ACTIVE);
+        $icon = $this->getIcon($sectionValue[SystemcheckHelper::CODE]);
+        $label = $icon . __(' Cobby active');
+
+        $fieldValue = $this->htmlBuilder($sectionValue);
+
+        return $this->getFieldHtml($fieldset, 'cobby_active', $label, $fieldValue, $icon);
+    }
+
+    private function getCobbyVersion($fieldset)
+    {
+        $sectionValue = $this->systemCheckHelper->getElement(self::COBBY_VERSION);
+        $icon = $this->getIcon($sectionValue[SystemcheckHelper::CODE]);
+        $label = $icon . __(" Cobby Version");
+
+        $fieldValue = $this->htmlBuilder($sectionValue);
+
+        return $this->getFieldHtml($fieldset, 'cobby_synced', $label, $fieldValue, $icon);
     }
 
     private function htmlBuilder($sectionValue)
