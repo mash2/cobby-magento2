@@ -149,7 +149,10 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
 
     private $sourceItemCollectionFactory;
 
-    private $productMetadata;
+    /**
+     * @var \Magento\Framework\Module\Manager
+     */
+    private $moduleManager;
 
     /**
      * @param \Magento\Framework\Json\Helper\Data $jsonHelper
@@ -163,6 +166,7 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
      * @param \Magento\Catalog\Model\ResourceModel\Product\Option\CollectionFactory $optionColFactory
      * @param \Mash2\Cobby\Model\ResourceModel\Product\CollectionFactory $cobbyProduct
      * @param \Magento\Framework\Event\ManagerInterface $eventManager
+     * @param \Magento\Framework\Module\Manager $moduleManager
      */
     public function __construct(
         \Magento\Framework\Json\Helper\Data $jsonHelper,
@@ -176,7 +180,7 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
         \Magento\Catalog\Model\ResourceModel\Product\Option\CollectionFactory $optionColFactory,
         \Mash2\Cobby\Model\ResourceModel\Product\CollectionFactory $cobbyProduct,
         \Magento\Framework\Event\ManagerInterface $eventManager,
-        \Magento\Framework\App\ProductMetadata $productMetadata
+        \Magento\Framework\Module\Manager $moduleManager
     )
     {
         $this->_entityCollectionFactory = $collectionFactory;
@@ -192,7 +196,7 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
         $this->jsonHelper = $jsonHelper;
         $this->cobbyProduct = $cobbyProduct;
         $this->eventManager = $eventManager;
-        $this->productMetadata = $productMetadata;
+        $this->moduleManager = $moduleManager;
 
         $this->initStores();
     }
@@ -452,7 +456,7 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
     protected function prepareCatalogInventorySources(array $productIds, array $poductIdSkuMap)
     {
         $result = $this->_initResult($productIds);
-        $multiSources = version_compare($this->productMetadata->getVersion(), "2.3.0", ">=");
+        $multiSources = $this->moduleManager->isEnabled('Magento_InventoryCatalog');
 
         if($multiSources && count($poductIdSkuMap) > 0) {
 

@@ -54,7 +54,10 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
 
     private $commandDelete;
 
-    private $productMetadata;
+    /**
+     * @var \Magento\Framework\Module\Manager
+     */
+    private $moduleManager;
 
     /**
      * StockManagement constructor.
@@ -66,6 +69,8 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
      * @param \Magento\CatalogInventory\Api\StockConfigurationInterface $stockConfiguration
      * @param \Magento\CatalogInventory\Model\Spi\StockStateProviderInterface $stockStateProvider
      * @param \Mash2\Cobby\Helper\Settings $cobbySettings
+     * @param \Mash2\Cobby\Model\Product $product
+     * @param \Magento\Framework\Module\Manager $moduleManager
      * @internal param \Magento\Catalog\Model\ResourceModel\Category\Collection $categoryCollection
      */
     public function __construct(
@@ -78,13 +83,14 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         \Magento\CatalogInventory\Model\Spi\StockStateProviderInterface $stockStateProvider,
         \Mash2\Cobby\Helper\Settings $cobbySettings,
         \Mash2\Cobby\Model\Product $product,
-        \Magento\Framework\App\ProductMetadata $productMetadata
+        \Magento\Framework\Module\Manager $moduleManager
     ) {
         $this->stockRegistry = $stockRegistry;
         $this->stockConfiguration = $stockConfiguration;
         $this->stockStateProvider = $stockStateProvider;
         $this->cobbySettings = $cobbySettings;
-        $this->productMetadata = $productMetadata;
+        $this->moduleManager = $moduleManager;
+
         parent::__construct($resourceModel, $productCollectionFactory, $eventManager, $resourceHelper, $product);
     }
 
@@ -107,7 +113,7 @@ class StockManagement extends AbstractManagement implements \Mash2\Cobby\Api\Imp
         $inventorySourceAppendItems = array();
         $inventorySourceDeleteItems = array();
 
-        $multiSources = version_compare($this->productMetadata->getVersion(), "2.3.0", ">=");
+        $multiSources = $this->moduleManager->isEnabled('Magento_InventoryCatalog');
 
         foreach ($rows as $row) {
             $sku = $row['sku'];
