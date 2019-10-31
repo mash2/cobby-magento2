@@ -109,7 +109,8 @@ class BundleManagement extends AbstractManagement implements \Mash2\Cobby\Api\Im
                     $items[$productId]['titles'][] = array(
                         'option_id' => $nextOptionId,
                         'store_id' => $productCustomOptionTitle['store_id'],
-                        'title' => $productCustomOptionTitle['title']
+                        'title' => $productCustomOptionTitle['title'],
+                        'parent_product_id' => $productId
                     );
                 }
 
@@ -178,6 +179,6 @@ class BundleManagement extends AbstractManagement implements \Mash2\Cobby\Api\Im
 
         $this->eventManager->dispatch('cobby_import_product_bundleoption_import_after', array('products' => $changedProductIds));
 
-        return array('product_ids' => $result);
+        return array( array('product_ids' => $result));
     }
 }
