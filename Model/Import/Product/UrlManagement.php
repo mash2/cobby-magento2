@@ -258,6 +258,9 @@ class UrlManagement extends AbstractManagement implements \Mash2\Cobby\Api\Impor
 
         foreach ($this->vitalForGenerationFields as $field) {
             if (isset($rowData[$field])) {
+                if(isset($rowData[self::URL_KEY])){
+                    $rowData[self::URL_KEY] = $this->formatUrlKey($productId, $rowData[self::URL_KEY]);
+                }
                 $product->setData($field, $rowData[$field]);
             }
         }
