@@ -97,8 +97,6 @@ abstract class AbstractManagement extends \Mash2\Cobby\Model\Import\AbstractEnti
 
         $this->product->updateHash($productIds);
 
-        return $this; //HACK: staging is not supported
-
         $updatedAt = (new \DateTime())->format(\Magento\Framework\Stdlib\DateTime::DATETIME_PHP_FORMAT);
         foreach ($productIds as $productId) {
             $entityRowsUp[] = array( 'updated_at' => $updatedAt, 'entity_id' => $productId );

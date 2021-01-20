@@ -609,7 +609,7 @@ class ProductManagement extends AbstractManagement// \Magento\CatalogImportExpor
         }
 
         $this->saveProductEntity($entityRowsIn)
-//            ->touchProducts($this->getProductIds())
+            ->touchProducts($this->getProductIds())
             ->saveProductWebsites($productWebsites)
             ->saveProductAttributes($attributes);
 
