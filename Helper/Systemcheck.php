@@ -133,9 +133,9 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         $value = __('Memory ok');
         $link = '';
         try {
-            $memory = ini_get('memory_limit');
+            $memory = $this->getMBytes(ini_get('memory_limit'));
 
-            if ((int)$memory < self::MIN_MEMORY) {
+            if ($memory < self::MIN_MEMORY) {
                 $code = self::ERROR;
                 $value = __('Memory is %1MB, it has to be at least %2MB', $memory, self::MIN_MEMORY);
                 $link = self::URL;
@@ -147,6 +147,22 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $this->memory = array(self::VALUE => $value, self::CODE=> $code, self::LINK => $link);
+    }
+
+    private function getMBytes($val)
+    {
+        $val = trim($val);
+        $valInt = (int)$val;
+        $last = strtolower($val{strlen($val)-1});
+        switch($last) {
+            case 'g':
+                $valInt *= 1024;
+                break;
+            case 'k':
+                $valInt /= 1024;
+                break;
+        }
+        return $valInt;
     }
 
     private function checkCredentials()
