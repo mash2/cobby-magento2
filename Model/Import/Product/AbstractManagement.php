@@ -28,6 +28,13 @@ abstract class AbstractManagement extends \Mash2\Cobby\Model\Import\AbstractEnti
     private $productEntityLinkField;
 
     /**
+     * Product entity identifier field
+     *
+     * @var string
+     */
+    private $productEntityIdentifierField;
+
+    /**
      * @var \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory
      */
     private $productCollectionFactory;
@@ -93,13 +100,19 @@ abstract class AbstractManagement extends \Mash2\Cobby\Model\Import\AbstractEnti
      */
     protected function touchProducts($productIds)
     {
-        $entityRowsUp = array();
+        $collection = $this->productCollectionFactory
+            ->create()
+            ->addAttributeToFilter('entity_id', array('in' => $productIds));
 
         $this->product->updateHash($productIds);
 
         $updatedAt = (new \DateTime())->format(\Magento\Framework\Stdlib\DateTime::DATETIME_PHP_FORMAT);
-        foreach ($productIds as $productId) {
-            $entityRowsUp[] = array( 'updated_at' => $updatedAt, 'entity_id' => $productId );
+        $entityRowsUp = array();
+        foreach ($collection as $info) {
+            $entityRowsUp[] = [
+                'updated_at' => $updatedAt,
+                $this->getProductEntityLinkField() => $info[$this->getProductEntityLinkField()]
+            ];
         }
 
         if (count($entityRowsUp) > 0) {
@@ -135,5 +148,20 @@ abstract class AbstractManagement extends \Mash2\Cobby\Model\Import\AbstractEnti
                 ->getLinkField();
         }
         return $this->productEntityLinkField;
+    }
+
+    /**
+     * Get product entity identifier field
+     *
+     * @return string
+     */
+    protected function getProductIdentifierField()
+    {
+        if (!$this->productEntityIdentifierField) {
+            $this->productEntityIdentifierField = $this->getMetadataPool()
+                ->getMetadata(\Magento\Catalog\Api\Data\ProductInterface::class)
+                ->getIdentifierField();
+        }
+        return $this->productEntityIdentifierField;
     }
 }
