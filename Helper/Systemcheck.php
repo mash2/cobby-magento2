@@ -153,7 +153,7 @@ class Systemcheck extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $val = trim($val);
         $valInt = (int)$val;
-        $last = strtolower($val{strlen($val)-1});
+        $last = strtolower($val[strlen($val)-1]);
         switch($last) {
             case 'g':
                 $valInt *= 1024;
