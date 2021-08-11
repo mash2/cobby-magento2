@@ -1,4 +1,10 @@
 <?php
+
+/*
+ * @copyright Copyright (c) 2021 mash2 GmbH & Co. KG. All rights reserved.
+ * @license http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0).
+ */
+
 namespace Mash2\Cobby\Model\Import\Product;
 
 use Magento\Framework\Stdlib\DateTime;
@@ -304,9 +310,11 @@ class ProductManagement extends AbstractManagement// \Magento\CatalogImportExpor
             $this->eventManager->dispatch('cobby_import_product_import_after', array('transport' => $transportObject));
         }
 
-        foreach ($this->newSkus as $sku => $data) {
-            $data['sku'] = $sku;
-            $result[] = $data;
+        foreach ($this->newSkus as $sku => $item) {
+            $product = $item;
+            $product['sku'] = $sku;
+            $product['errors'] = array();
+            $result[] = $product;
         }
 
         return $result;
