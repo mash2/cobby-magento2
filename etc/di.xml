@@ -88,4 +88,10 @@
         <plugin name="cobby_save_swatches_option_params" type="Mash2\Cobby\Model\Plugin\EavAttribute" sortOrder="1"/>
     </type>
 
+    <type name="Magento\Framework\Webapi\Validator\EntityArrayValidator">
+        <arguments>
+            <argument name="complexArrayItemLimit" xsi:type="number">1024</argument>
+        </arguments>
+    </type>
+
 </config>
