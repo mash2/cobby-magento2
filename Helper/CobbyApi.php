@@ -81,7 +81,9 @@ class CobbyApi extends \Magento\Framework\App\Helper\AbstractHelper
         //TODO: validate exception
         if ($response->getStatus() != 200 && $response->getStatus() != 201) {
             $errorRestResultAsObject = json_decode($response->getBody());
-            throw new \Exception($errorRestResultAsObject->message);
+            if ($errorRestResultAsObject != null) { // check if response is right
+                throw new \Exception($errorRestResultAsObject->message);
+            }
         }
         $restResultAsObject = json_decode($response->getBody());
 
