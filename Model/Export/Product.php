@@ -474,9 +474,10 @@ class Product extends \Mash2\Cobby\Model\Export\AbstractEntity
            $collection->addFieldToFilter('sku', array_keys($poductIdSkuMap) );
 
            foreach ($collection->getData() as $data) {
-               //if ($data['sku'] == )
-               $productId = $poductIdSkuMap[$data['sku']];
-               $result[$productId][] = $data;
+               if (array_key_exists($data['sku'], $poductIdSkuMap)) { //Check if sku is in Mapping
+                   $productId = $poductIdSkuMap[$data['sku']];
+                   $result[$productId][] = $data;
+               }
            }
         }
 

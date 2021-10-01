@@ -4,7 +4,7 @@
     <acl>
         <resources>
             <resource id="Magento_Backend::admin">
-                <resource id="Mash2_Cobby::cobby" title="Cobby" sortOrder="10" />
+                <resource id="Mash2_Cobby::cobby" title="cobby" sortOrder="10" />
             </resource>
         </resources>
     </acl>
